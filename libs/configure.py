@@ -69,7 +69,7 @@ parser.add_argument(
     "--use-bloom",
     help="Whether to use a Bloom filter for action selection during training.",
     type=bool,
-    default=False,
+    action=argparse.BooleanOptionalAction,
 )
 
 
