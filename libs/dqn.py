@@ -1,3 +1,4 @@
+import pathlib
 from typing import TypedDict
 from typing_extensions import Self, Unpack
 
@@ -36,3 +37,15 @@ class DoubleDQN:
         self.pnet = self.pnet.to(device)
         self.tnet = self.tnet.to(device)
         return self
+
+    def save(self, outdir: pathlib.Path) -> None:
+        torch.save(self.pnet.state_dict(), outdir / "policy_net.pt")
+        torch.save(self.tnet.state_dict(), outdir / "target_net.pt")
+
+    def load_state_dict(self, outdir: pathlib.Path) -> None:
+        self.pnet.load_state_dict(
+            torch.load(str(outdir / "policy_net.pt"), weights_only=True)
+        )
+        self.tnet.load_state_dict(
+            torch.load(str(outdir / "target_net.pt"), weights_only=True)
+        )
