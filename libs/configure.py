@@ -57,7 +57,7 @@ parser.add_argument(
     "--update-rate",
     help="Update rate \tau of target network to be used in training.",
     type=float,
-    default=0.1,
+    default=0.05,
 )
 parser.add_argument(
     "--outdir",

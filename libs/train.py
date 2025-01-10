@@ -47,6 +47,10 @@ def train(
             _next_state, _reward, terminated, truncated, _ = (
                 env_config.env.step(action.item())
             )
+            # Penalise if cart position is too far from center
+            # n.b. -4.8 <= cart_position <= 4.8
+            _reward -= abs(_next_state[0]) ** 2 / 20
+
             this_episode_reward += int(
                 float(_reward)
             )  # Weird cast for type checker
