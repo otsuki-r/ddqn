@@ -71,6 +71,12 @@ parser.add_argument(
     type=bool,
     action=argparse.BooleanOptionalAction,
 )
+parser.add_argument(
+    "--eval",
+    help="Whether to run a model stored in --outdir",
+    type=bool,
+    action=argparse.BooleanOptionalAction,
+)
 
 
 @dataclass
@@ -125,8 +131,10 @@ def process_cli_args() -> argparse.Namespace:
     return cli_args
 
 
-def get_env_config() -> EnvConfig:
-    env = gymnasium.make("CartPole-v1")
+def get_env_config(cli_args: argparse.Namespace) -> EnvConfig:
+    env = gymnasium.make(
+        "CartPole-v1", render_mode="human" if cli_args.eval else None
+    )
     initial_state, _ = env.reset(seed=42)
     return EnvConfig(
         env=env,
