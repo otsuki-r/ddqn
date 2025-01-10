@@ -37,7 +37,7 @@ if __name__ == "__main__":
         while True:
             env = gym.make("CartPole-v1", render_mode="human")
             this_seed = random.randint(1, 1_000_000)
-            print(this_seed)
+            logger.debug("Seed: %s", this_seed)
             _state, _ = env.reset(seed=this_seed)
             state = torch.tensor(_state, dtype=torch.float32)
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
                 state = torch.tensor(next_state)
                 completed = terminated or truncated
                 this_duration += 1
-            print(this_duration)
+            logger.debug("This episode duration: %s", this_duration)
 
             env.close()
             time.sleep(1)
