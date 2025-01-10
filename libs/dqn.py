@@ -49,3 +49,7 @@ class DoubleDQN:
         self.tnet.load_state_dict(
             torch.load(str(outdir / "target_net.pt"), weights_only=True)
         )
+
+    def eval(self) -> None:
+        self.pnet.eval()
+        self.tnet.eval()
