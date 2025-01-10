@@ -102,6 +102,7 @@ def train(
     plot_episode_durations(episode_durations, outdir / "episode_durations.png")
     plot_losses(losses, outdir / "losses.png")
     plot_rewards(rewards, outdir / "rewards.png")
+    dqn.save(outdir)
 
     logger.debug("Finished training")
     logger.debug(f"Time taken: {time.time() - start:.3f}s")
