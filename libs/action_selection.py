@@ -16,21 +16,23 @@ def make_action_selector(
     use_bloom: bool = False,
     device: torch.device,
     env: Env,
-) -> Callable[[int, torch.Tensor, nn.Module], torch.Tensor]:
+) -> Callable[[torch.Tensor, nn.Module], torch.Tensor]:
     bloom_filter: BloomFilter[tuple[torch.Tensor, int]] | None
+    global_step_number = 0
     if use_bloom:
         bloom_filter = BloomFilter(10_000)
     else:
         bloom_filter = None
 
     def inner(
-        step_number: int,
         state: torch.Tensor,
         pnet: nn.Module,
     ) -> torch.Tensor:
+        nonlocal global_step_number
         this_eps_threshold = eps_end + (eps_start - eps_end) * math.exp(
-            -step_number * eps_decay
+            -global_step_number * eps_decay
         )
+        global_step_number += 1
         if random.random() > this_eps_threshold:
             with torch.no_grad():
                 return pnet(state).max(1).indices.view(1, 1)

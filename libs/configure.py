@@ -81,7 +81,7 @@ parser.add_argument(
 
 @dataclass
 class TrainingConfig:
-    action_selector: Callable[[int, torch.Tensor, nn.Module], torch.Tensor]
+    action_selector: Callable[[torch.Tensor, nn.Module], torch.Tensor]
     num_episodes: int
     batch_size: int
     discount: float

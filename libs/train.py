@@ -40,9 +40,7 @@ def train(
 
         this_episode_reward = 0
         for step_number in itertools.count():
-            action = training_config.action_selector(
-                step_number, state, dqn.pnet
-            )
+            action = training_config.action_selector(state, dqn.pnet)
 
             _next_state, _reward, terminated, truncated, _ = (
                 env_config.env.step(action.item())
