@@ -32,6 +32,7 @@ def train(
 
     logger.debug("Starting training...")
     start = time.time()
+    global_step_number = 1
     for episode_num in tqdm.tqdm(range(training_config.num_episodes)):
         _state, _ = env_config.env.reset()
         state = torch.tensor(
@@ -47,11 +48,12 @@ def train(
             )
             # Penalise if cart position is too far from center
             # n.b. -4.8 <= cart_position <= 4.8
-            _reward -= abs(_next_state[0]) ** 2 / 20
+            # _reward -= abs(_next_state[0]) ** 2 / 20
 
-            this_episode_reward += int(
-                float(_reward)
-            )  # Weird cast for type checker
+            this_episode_reward += _reward
+            # this_episode_reward += int(
+            #     float(_reward)
+            # )  # Weird cast for type checker
 
             reward = torch.tensor(
                 [[_reward]], dtype=torch.float32, device=training_config.device
@@ -88,9 +90,21 @@ def train(
             )
 
             # Update the *target network* by one step
-            update_one_step(dqn, update_rate=training_config.update_rate)
+            update_one_step(
+                dqn,
+                update_rate=training_config.update_rate,
+                global_step_number=global_step_number,
+            )
 
+            global_step_number += 1
             if completed:
+                logger.debug(
+                    "Episode: %s, duration: %s, reward: %s, loss: %s",
+                    episode_num,
+                    step_number + 1,
+                    this_episode_reward,
+                    this_loss,
+                )
                 episode_durations.append(step_number + 1)
                 if this_loss is not None:
                     losses.append(this_loss)
@@ -121,41 +135,88 @@ def optimize_one_step(
     optimizer: optim.Optimizer,
     device: torch.device,
 ) -> float | None:
+    """
+    Optimize the policy network based on experience sampled from the
+    target network's replay memory i.e. replay the target network's
+    experience to the policy network ino order to train it.
+
+    Since the batch is sampled from the target network's experience,
+    the target network 'knows' what happened at t+1 (what action was
+    taken, and what the next state was), whereas the policy state does
+    not. This asymmetry means that the target network should have a
+    more accurate prediction of the true state-action value function
+    (Q-function) $Q^\ast$, and we use this to train the policy network.
+
+    The predictions being fed into the loss function are thus the
+    state-action values according to the policy network
+    $Q^{\text{policy}}(s_t, a_t)$, derived from the policy
+    network's estimate $Q^{\text{policy}}(s_t)$ and a
+    concrete action $a_t$ taken at time t (sampled from the replay).
+
+    The targets of the loss function are the state-action values
+    according to the target network $Q^{\text{target}}(s_t, a_t)$.
+    It is given by the sum of the concrete reward $r_t$ (awarded to
+    the choice of action $a_t$) plus the estimated discounted value of
+    the next state:
+    $$
+    Q^{\text{target}}(s_t, a_t) = r_t + \gamma V^{\text{target}}(s_t),
+    $$
+    where $V^{\text{target}}(s_t) = \max_a Q^{\text{target}}(s_t, a)$
+    is the state value, according to the target network.
+
+    Since DQN methods are notoriously unstable, we use the Huber loss
+    to try and reduce sensitivity to extreme values and use gradient
+    descent to minimise the loss.
+
+    Note: the two networks in `ddqn` encode all of the state-action
+    values at the same time. The networks maintain $Q(s_t)$ and the
+    state-action value function $Q(s_t, a_i)$ of action i is given by
+    the ith column of $Q(s_t)$.
+    """
+
     if len(replay_memory) < batch_size:
+        # Pass until we have enough experience to bootstrap from
         return None
 
     sample_state_changes = replay_memory.sample(batch_size)
     this_batch = StateChanges(sample_state_changes)
 
+    state_batch = torch.cat(this_batch.states)  # (batch_size, dim(state_space))
+    action_batch = torch.cat(this_batch.actions)  # (batch_size, 1)
+    reward_batch = torch.cat(this_batch.rewards)  # (batch_size, 1)
+
+    # Compute predictions $Q^{\text{policy}}(s_t, a_t)$.
+    # (batch_size, dim(action_space) -> (batch_size, 1) -> (batch_size,)
+    predicted_state_action_values = (
+        ddqn.pnet(state_batch).gather(1, action_batch).squeeze(1)
+    )
+
+    # Compute target values
+    # $Q^{\text{target}}(s_t, a_t) = r_t + \gamma V^{\text{target}}(s_{t+1})$.
+    # Any experiences with `next_state = None` were terminated and so
+    # automatically have a value of zero.
+    target_next_state_values = torch.zeros(
+        batch_size, device=device
+    )  # (batch_size,)
     non_final_mask = torch.tensor(
         list(map(lambda s: s is not None, this_batch.next_states)),
         dtype=torch.bool,
         device=device,
-    )
-
+    )  # (batch_size,)
     non_final_next_states = torch.cat(
         [s for s in this_batch.next_states if s is not None]
-    )
-
-    state_batch = torch.cat(this_batch.states)
-    action_batch = torch.cat(this_batch.actions)
-    reward_batch = torch.cat(this_batch.rewards)
-
-    state_action_values = ddqn.pnet(state_batch).gather(1, action_batch)
-
-    next_state_values = torch.zeros(batch_size, device=device)
+    )  # (VAR, dim(state_space))
     with torch.no_grad():
-        next_state_values[non_final_mask] = (
+        target_next_state_values[non_final_mask] = (
             ddqn.tnet(non_final_next_states).max(1).values
         )
-
-    expected_state_action_values = (
-        next_state_values * discount + reward_batch.squeeze(1)
-    )
+    target_state_action_values = (
+        reward_batch.squeeze(1) + discount * target_next_state_values
+    )  # (batch_size,)
 
     this_loss = loss_fn(
-        state_action_values.squeeze(1), expected_state_action_values
-    )
+        predicted_state_action_values, target_state_action_values
+    )  # SCALAR
 
     optimizer.zero_grad()
     this_loss.backward()
@@ -166,16 +227,21 @@ def optimize_one_step(
     return this_loss.item()
 
 
-def update_one_step(ddqn: DoubleDQN, *, update_rate: float) -> None:
+def update_one_step(
+    ddqn: DoubleDQN, *, update_rate: float, global_step_number
+) -> None:
     """
-    Updates each parameter according to:
+    Soft updates of target network according to
     θ′ <- τ * θ + (1 - τ) * θ′
+
+    Hard update every 1000 steps.
     """
     tnet_state = ddqn.tnet.state_dict()
     pnet_state = ddqn.pnet.state_dict()
-    for key in pnet_state.keys():
-        tnet_state[key] = pnet_state[key] * update_rate + tnet_state[key] * (
-            1.0 - update_rate
+    for theta in pnet_state.keys():
+        tnet_state[theta] = (
+            update_rate * pnet_state[theta]
+            + (1.0 - update_rate) * tnet_state[theta]
         )
     ddqn.tnet.load_state_dict(tnet_state)
     return

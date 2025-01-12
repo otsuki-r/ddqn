@@ -27,8 +27,8 @@ class DQN(nn.Module):
 
 class DoubleDQN:
     def __init__(self, **kwargs: Unpack[DQNParams]) -> None:
-        self.pnet = DQN(**kwargs)  # policy network
-        self.tnet = DQN(**kwargs)  # target network
+        self.pnet = DQN(**kwargs)  # policy network for selecting action
+        self.tnet = DQN(**kwargs)  # target network for evaluating action
 
         # Ensure initialised to same state
         self.tnet.load_state_dict(self.pnet.state_dict())
