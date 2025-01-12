@@ -87,7 +87,10 @@ def train(
                 reward=reward,
                 next_state=next_state,
             )
-            replay_memory.append(exp)
+            if episode_num < training_config.num_episodes // 3:
+                replay_memory.append_warmup(exp)
+            if episode_num > training_config.num_episodes // 10:
+                replay_memory.append_main(exp)
 
             # Optimize the *policy network* by one step
             this_loss = optimize_one_step(
@@ -187,11 +190,10 @@ def optimize_one_step(
     the ith column of $Q(s_t)$.
     """
 
-    if len(replay_memory) < batch_size:
-        # Pass until we have enough experience to bootstrap from
+    sample_state_changes = replay_memory.sample(batch_size, 0.05)
+    if sample_state_changes is None:
         return None
 
-    sample_state_changes = replay_memory.sample(batch_size)
     this_batch = StateChanges(sample_state_changes)
 
     state_batch = torch.cat(this_batch.states)  # (batch_size, dim(state_space))

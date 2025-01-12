@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 from collections import deque
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 import torch
 
@@ -30,9 +30,30 @@ class StateChanges:
         self.next_states = [s.next_state for s in state_changes]
 
 
-class ReplayMemory(deque[T]):
+class ReplayMemory(Generic[T]):
     def __init__(self, capacity: int) -> None:
-        super().__init__([], maxlen=capacity)
+        self.warmup_memory = deque[T]([], maxlen=capacity)
+        self.main_memory = deque[T]([], maxlen=capacity)
 
-    def sample(self, num_samples: int) -> list[T]:
-        return random.sample(self, num_samples)
+    def sample(self, batch_size: int, frac: float) -> list[T] | None:
+        num_warmup_samples = int(batch_size * frac)
+        num_main_samples = batch_size - num_warmup_samples
+
+        if len(self.main_memory) < 1000:
+            return None
+        if (
+            len(self.warmup_memory) < num_warmup_samples
+            or len(self.main_memory) < num_main_samples
+        ):
+            # Pass until we have enough experience to bootstrap from
+            return None
+
+        return random.sample(
+            self.warmup_memory, num_warmup_samples
+        ) + random.sample(self.main_memory, num_main_samples)
+
+    def append_warmup(self, sample: T) -> None:
+        self.warmup_memory.append(sample)
+
+    def append_main(self, sample: T) -> None:
+        self.main_memory.append(sample)

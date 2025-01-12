@@ -15,7 +15,7 @@ parser.add_argument(
     "--epsilon-start",
     help="Start value for parameter used in epsilon-greedy action selection.",
     type=float,
-    default=1,
+    default=0.90,
 )
 parser.add_argument(
     "--epsilon-end",
@@ -51,13 +51,13 @@ parser.add_argument(
     "--learning-rate",
     help="Learing rate LR to be used in training.",
     type=float,
-    default=1e-4,
+    default=1e-3,
 )
 parser.add_argument(
     "--update-rate",
     help="Update rate \tau of target network to be used in training.",
     type=float,
-    default=1e-3,
+    default=1e-2,
 )
 parser.add_argument(
     "--outdir",
@@ -97,6 +97,7 @@ class TrainingConfig:
 @dataclass
 class EnvConfig:
     env: Env
+    max_episode_length: int
     action_space_size: int
     state_space_size: int
 
@@ -141,6 +142,7 @@ def get_env_config(cli_args: argparse.Namespace) -> EnvConfig:
     initial_state, _ = env.reset(seed=42)
     return EnvConfig(
         env=env,
+        max_episode_length=500,
         action_space_size=int(env.action_space.n),  # type: ignore
         state_space_size=len(initial_state),
     )
