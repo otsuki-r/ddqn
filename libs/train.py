@@ -34,7 +34,7 @@ def train(
     episode_durations: list[int] = []
     completed: bool
     losses: list[float] = []
-    rewards: list[int] = []
+    rewards: list[float] = []
     epsilons: list[float] = []
 
     logger.debug("Starting training...")
