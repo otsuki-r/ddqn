@@ -81,7 +81,10 @@ parser.add_argument(
 
 @dataclass
 class TrainingConfig:
-    action_selector: Callable[[torch.Tensor, nn.Module], torch.Tensor]
+    action_selector: Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
+    epsilon_start: float
+    epsilon_end: float
+    epsilon_decay: float
     num_episodes: int
     batch_size: int
     discount: float
@@ -151,13 +154,13 @@ def build_training_config(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     return TrainingConfig(
         action_selector=make_action_selector(
-            eps_start=cli_args.epsilon_start,
-            eps_end=cli_args.epsilon_end,
-            eps_decay=cli_args.epsilon_decay,
             use_bloom=cli_args.use_bloom,
             device=device,
             env=env_config.env,
         ),
+        epsilon_start=cli_args.epsilon_start,
+        epsilon_end=cli_args.epsilon_end,
+        epsilon_decay=cli_args.epsilon_decay,
         num_episodes=cli_args.num_episodes,
         batch_size=cli_args.batch_size,
         discount=cli_args.discount,

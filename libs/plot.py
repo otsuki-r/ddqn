@@ -34,6 +34,12 @@ REWARD_PLOT_CONFIG = PlotConfig(
     xlabel="Episode number",
     ylabel="Reward",
 )
+EPSILON_PLOT_CONFIG = PlotConfig(
+    plot_id=4,
+    title="Epsilon decay",
+    xlabel="Global step number",
+    ylabel="Epsilon",
+)
 
 
 def _plot(
@@ -59,3 +65,7 @@ def plot_losses(data: list[float], path: pathlib.Path) -> None:
 
 def plot_rewards(data: list[int], path: pathlib.Path) -> None:
     _plot(data, path=path, plot_config=REWARD_PLOT_CONFIG)
+
+
+def plot_epsilons(data: list[float], path: pathlib.Path) -> None:
+    _plot(data, path=path, plot_config=EPSILON_PLOT_CONFIG)

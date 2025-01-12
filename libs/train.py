@@ -1,4 +1,5 @@
 import itertools
+import math
 import pathlib
 import time
 
@@ -9,7 +10,12 @@ import tqdm
 from .base_logger import logger
 from .configure import EnvConfig, TrainingConfig
 from .dqn import DoubleDQN
-from .plot import plot_episode_durations, plot_losses, plot_rewards
+from .plot import (
+    plot_episode_durations,
+    plot_epsilons,
+    plot_losses,
+    plot_rewards,
+)
 from .replay_memory import StateChange, StateChanges, ReplayMemory
 
 
@@ -29,19 +35,27 @@ def train(
     completed: bool
     losses: list[float] = []
     rewards: list[int] = []
+    epsilons: list[float] = []
 
     logger.debug("Starting training...")
     start = time.time()
-    global_step_number = 1
+    global_step_number = 0
     for episode_num in tqdm.tqdm(range(training_config.num_episodes)):
+        this_episode_reward: float = 0.0
+
         _state, _ = env_config.env.reset()
         state = torch.tensor(
             _state, dtype=torch.float32, device=training_config.device
         ).unsqueeze(0)
 
-        this_episode_reward = 0
         for step_number in itertools.count():
-            action = training_config.action_selector(state, dqn.pnet)
+            this_epsilon = training_config.epsilon_end + (
+                training_config.epsilon_start - training_config.epsilon_end
+            ) * math.exp(-global_step_number * training_config.epsilon_decay)
+
+            action = training_config.action_selector(
+                this_epsilon, state, dqn.pnet
+            )
 
             _next_state, _reward, terminated, truncated, _ = (
                 env_config.env.step(action.item())
@@ -51,9 +65,6 @@ def train(
             # _reward -= abs(_next_state[0]) ** 2 / 20
 
             this_episode_reward += _reward
-            # this_episode_reward += int(
-            #     float(_reward)
-            # )  # Weird cast for type checker
 
             reward = torch.tensor(
                 [[_reward]], dtype=torch.float32, device=training_config.device
@@ -93,17 +104,18 @@ def train(
             update_one_step(
                 dqn,
                 update_rate=training_config.update_rate,
-                global_step_number=global_step_number,
             )
 
+            epsilons.append(this_epsilon)
             global_step_number += 1
             if completed:
                 logger.debug(
-                    "Episode: %s, duration: %s, reward: %s, loss: %s",
+                    "Episode: %s, duration: %s, reward: %s, ε: %s, loss: %s",
                     episode_num,
                     step_number + 1,
                     this_episode_reward,
-                    this_loss,
+                    round(this_epsilon, 8),
+                    None if this_loss is None else round(this_loss, 8),
                 )
                 episode_durations.append(step_number + 1)
                 if this_loss is not None:
@@ -118,6 +130,7 @@ def train(
     plot_episode_durations(episode_durations, outdir / "episode_durations.png")
     plot_losses(losses, outdir / "losses.png")
     plot_rewards(rewards, outdir / "rewards.png")
+    plot_epsilons(epsilons, outdir / "epsilons.png")
     dqn.save(outdir)
 
     logger.debug("Finished training")
@@ -135,7 +148,7 @@ def optimize_one_step(
     optimizer: optim.Optimizer,
     device: torch.device,
 ) -> float | None:
-    """
+    r"""
     Optimize the policy network based on experience sampled from the
     target network's replay memory i.e. replay the target network's
     experience to the policy network ino order to train it.
@@ -227,9 +240,7 @@ def optimize_one_step(
     return this_loss.item()
 
 
-def update_one_step(
-    ddqn: DoubleDQN, *, update_rate: float, global_step_number
-) -> None:
+def update_one_step(ddqn: DoubleDQN, *, update_rate: float) -> None:
     """
     Soft updates of target network according to
     θ′ <- τ * θ + (1 - τ) * θ′
