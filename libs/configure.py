@@ -27,7 +27,7 @@ parser.add_argument(
     "--epsilon-decay",
     help="Decay rate for parameter used in epsilon-greedy action selection.",
     type=float,
-    default=0.001,
+    default=0.005,
 )
 parser.add_argument(
     "--num-episodes",
@@ -57,7 +57,7 @@ parser.add_argument(
     "--update-rate",
     help="Update rate \tau of target network to be used in training.",
     type=float,
-    default=0.005,
+    default=0.001,
 )
 parser.add_argument(
     "--outdir",

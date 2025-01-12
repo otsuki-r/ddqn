@@ -55,7 +55,7 @@ if __name__ == "__main__":
             time.sleep(1)
     else:
         # Set up training
-        replay_memory: ReplayMemory[StateChange] = ReplayMemory(1_000)
+        replay_memory: ReplayMemory[StateChange] = ReplayMemory(10_000)
         training_config = build_training_config(
             cli_args, env_config, parameters=dqn.pnet.parameters()
         )
