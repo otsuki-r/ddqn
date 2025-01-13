@@ -110,10 +110,7 @@ def train(
             )
 
             # Update the *target network* by one step
-            update_one_step(
-                dqn,
-                update_rate=training_config.update_rate,
-            )
+            _update_one_step(dqn, tau=training_config.tau)
 
             epsilons.append(this_epsilon)
             global_step_number += 1
@@ -162,7 +159,7 @@ def train(
     return
 
 
-def optimize_one_step(
+def _optimize_one_step(
     ddqn: DoubleDQN,
     *,
     replay_memory: ReplayMemory,
@@ -263,19 +260,35 @@ def optimize_one_step(
     return this_loss.item()
 
 
-def update_one_step(ddqn: DoubleDQN, *, update_rate: float) -> None:
+def _update_one_step(ddqn: DoubleDQN, *, tau: float) -> None:
     """
-    Soft updates of target network according to
-    θ′ <- τ * θ + (1 - τ) * θ′
+    Soft updates of target network with parameters of policy network
+    to prevent too much drift.
 
-    Hard update every 1000 steps.
+    Copy over parameters *slowly* to mitigate the "moving targets"
+    problem where the weights being learned by the policy network
+    are trying to converge to a moving target. Doing it slowly enough
+    allows us to treat the target as essentially fixed.
+
+    The update rate is controlled by the convex combination
+                    θ′ <- τ * θ + (1 - τ) * θ′
+    where τ is the update rate.
+
+    Modifies the target network weights in situ.
+
+    Parameters
+    ----------
+    ddqn : DoubleDQN
+        Double DQN being trained.
+    tau : float
+        Update rate τ controlling how fast the target network changes.
     """
+
     tnet_state = ddqn.tnet.state_dict()
     pnet_state = ddqn.pnet.state_dict()
     for theta in pnet_state.keys():
         tnet_state[theta] = (
-            update_rate * pnet_state[theta]
-            + (1.0 - update_rate) * tnet_state[theta]
+            tau * pnet_state[theta] + (1.0 - tau) * tnet_state[theta]
         )
     ddqn.tnet.load_state_dict(tnet_state)
     return

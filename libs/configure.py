@@ -54,8 +54,8 @@ parser.add_argument(
     default=1e-3,
 )
 parser.add_argument(
-    "--update-rate",
-    help="Update rate \tau of target network to be used in training.",
+    "--tau",
+    help="Update rate τ of target network (soft update).",
     type=float,
     default=1e-2,
 )
@@ -89,7 +89,7 @@ class TrainingConfig:
     batch_size: int
     discount: float
     optimiser: optim.Optimizer
-    update_rate: float
+    tau: float
     loss_fn: torch.nn.modules.loss._Loss
     device: torch.device
 
@@ -169,7 +169,7 @@ def build_training_config(
         optimiser=optim.AdamW(
             parameters, lr=cli_args.learning_rate, amsgrad=True
         ),
-        update_rate=cli_args.update_rate,
+        tau=cli_args.tau,
         loss_fn=nn.SmoothL1Loss(),
         device=device,
     )
