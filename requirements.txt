@@ -1,0 +1,4 @@
+enlighten==1.13.0
+gymnasium==1.0.0
+matplotlib==3.10.0
+torch==2.5.1
