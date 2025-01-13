@@ -39,7 +39,7 @@ class ReplayMemory(Generic[T]):
         num_warmup_samples = int(batch_size * frac)
         num_main_samples = batch_size - num_warmup_samples
 
-        if len(self.main_memory) < 1000:
+        if len(self.main_memory) < 500:
             return None
         if (
             len(self.warmup_memory) < num_warmup_samples
