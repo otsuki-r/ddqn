@@ -9,7 +9,7 @@ from ddqn.configure import (
     process_cli_args,
 )
 from ddqn.structures import DoubleDQN, ReplayMemory, StateChange
-from ddqn.utils import train
+from ddqn.utils import run, train
 
 if __name__ == "__main__":
     cli_args = process_cli_args()
@@ -24,31 +24,8 @@ if __name__ == "__main__":
     )
 
     if cli_args.eval:
-        dqn.load_state_dict(outdir)
-        dqn.eval()
-
-        import time
-        import random
-
-        while True:
-            env = gym.make("CartPole-v1", render_mode="human")
-            this_seed = random.randint(1, 1_000_000)
-            logger.debug("Seed: %s", this_seed)
-            _state, _ = env.reset(seed=this_seed)
-            state = torch.tensor(_state, dtype=torch.float32)
-
-            completed = False
-            this_duration = 0
-            while not completed:
-                action = dqn.pnet(state).max(0).indices.item()
-                next_state, _, terminated, truncated, _ = env.step(action)
-                state = torch.tensor(next_state)
-                completed = terminated or truncated
-                this_duration += 1
-            logger.debug("This episode duration: %s", this_duration)
-
-            env.close()
-            time.sleep(1)
+        env = gym.make("CartPole-v1", render_mode="human")
+        run(ddqn, env=env, weights_dir=cli_args.outdir)
     else:
         logger.info("Training with args %s", vars(cli_args))
 
