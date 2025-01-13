@@ -7,7 +7,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from gymnasium.envs.registration import Env
-from .action_selection import make_action_selector
+from .action_selection import (
+    make_epsilon_greedy,
+    make_epsilon_greedy_with_bloom_filter,
+)
 
 
 parser = argparse.ArgumentParser("bloom_cart_pole")
@@ -154,12 +157,15 @@ def build_training_config(
     parameters: Iterator[nn.Parameter],
 ) -> TrainingConfig:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    action_selector: Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
+    if cli_args.use_bloom:
+        action_selector = make_epsilon_greedy_with_bloom_filter(
+            env=env_config.env, device=device
+        )
+    else:
+        action_selector = make_epsilon_greedy(env=env_config.env, device=device)
     return TrainingConfig(
-        action_selector=make_action_selector(
-            use_bloom=cli_args.use_bloom,
-            device=device,
-            env=env_config.env,
-        ),
+        action_selector=action_selector,
         epsilon_start=cli_args.epsilon_start,
         epsilon_end=cli_args.epsilon_end,
         epsilon_decay=cli_args.epsilon_decay,
