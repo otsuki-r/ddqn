@@ -4,7 +4,7 @@ from typing import Callable
 import torch
 import torch.nn as nn
 from gymnasium import Env
-from .bloom_filter import BloomFilter
+from ..bloom_filter import BloomFilter
 
 
 def make_action_selector(
