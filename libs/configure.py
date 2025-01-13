@@ -52,8 +52,8 @@ parser.add_argument(
     default=0.95,
 )
 parser.add_argument(
-    "--learning-rate",
-    help="Learing rate LR to be used in training.",
+    "--alpha",
+    help="Learing rate α of the optimiser to be used in training.",
     type=float,
     default=1e-3,
 )
@@ -130,7 +130,7 @@ def process_cli_args() -> argparse.Namespace:
     if cli_args.gamma < 0.0 or cli_args.gamma > 1.0:
         raise ValueError("Discounting power must lie in range [0, 1]")
 
-    if cli_args.learning_rate < 0.0:
+    if cli_args.alpha < 0.0:
         raise ValueError("Learning rate must be positive")
 
     if cli_args.update_rate < 0.0 or cli_args.update_rate > 1.0:
@@ -173,9 +173,7 @@ def build_training_config(
         num_episodes=cli_args.num_episodes,
         batch_size=cli_args.batch_size,
         gamma=cli_args.gamma,
-        optimiser=optim.AdamW(
-            parameters, lr=cli_args.learning_rate, amsgrad=True
-        ),
+        optimiser=optim.AdamW(parameters, lr=cli_args.alpha, amsgrad=True),
         tau=cli_args.tau,
         loss_fn=nn.SmoothL1Loss(),
         device=device,
