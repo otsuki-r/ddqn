@@ -5,9 +5,9 @@ import time
 
 import torch
 import torch.optim as optim
-import tqdm
 
 from .base_logger import logger
+from .progress_manager import manager
 from .configure import EnvConfig, TrainingConfig
 from .dqn import DoubleDQN
 from .plot import (
@@ -27,6 +27,12 @@ def train(
     replay_memory: ReplayMemory[StateChange],
     outdir: pathlib.Path,
 ) -> None:
+    pbar = manager.counter(
+        total=training_config.num_episodes,
+        desc="Episode num.",
+        unit="episodes",
+        color="green",
+    )
     dqn = dqn.to(training_config.device)
 
     state: torch.Tensor
@@ -40,7 +46,7 @@ def train(
     logger.debug("Starting training...")
     start = time.time()
     global_step_number = 0
-    for episode_num in tqdm.tqdm(range(training_config.num_episodes)):
+    for episode_num in range(training_config.num_episodes):
         this_episode_reward: float = 0.0
 
         _state, _ = env_config.env.reset()
@@ -129,6 +135,7 @@ def train(
             else:
                 assert next_state is not None
                 state = next_state
+        pbar.update()
 
         def winsorised_mean(vals: list[int], clip: int = 5) -> float:
             if len(vals) <= clip:
