@@ -6,8 +6,7 @@ import time
 import torch
 import torch.optim as optim
 
-from .base_logger import logger
-from .progress_manager import manager
+from .logger import logger, progress_manager
 from .configure import EnvConfig, TrainingConfig
 from .dqn import DoubleDQN
 from .plot import (
@@ -27,7 +26,7 @@ def train(
     replay_memory: ReplayMemory[StateChange],
     outdir: pathlib.Path,
 ) -> None:
-    pbar = manager.counter(
+    pbar = progress_manager.counter(
         total=training_config.num_episodes,
         desc="Episode num.",
         unit="episodes",
