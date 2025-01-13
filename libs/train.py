@@ -130,6 +130,20 @@ def train(
                 assert next_state is not None
                 state = next_state
 
+        def winsorised_mean(vals: list[int], clip: int = 5) -> float:
+            if len(vals) <= clip:
+                raise ValueError("Too few values to winsorize (clip=%s)", clip)
+            return sum(list(sorted(vals))[clip:]) / (len(vals) - clip)
+
+        try:
+            wmean = winsorised_mean(episode_durations[-20:])
+        except ValueError:
+            continue
+
+        if wmean > 480.0:
+            logger.info("Early finish")
+            break
+
     plot_episode_durations(episode_durations, outdir / "episode_durations.png")
     plot_losses(losses, outdir / "losses.png")
     plot_rewards(rewards, outdir / "rewards.png")
