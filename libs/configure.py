@@ -42,7 +42,7 @@ parser.add_argument(
     default=128,
 )
 parser.add_argument(
-    "--discount",
+    "--gamma",
     help="Discounting power of past actions in computing reward",
     type=float,
     default=0.95,
@@ -87,7 +87,7 @@ class TrainingConfig:
     epsilon_decay: float
     num_episodes: int
     batch_size: int
-    discount: float
+    gamma: float
     optimiser: optim.Optimizer
     tau: float
     loss_fn: torch.nn.modules.loss._Loss
@@ -123,7 +123,7 @@ def process_cli_args() -> argparse.Namespace:
     if cli_args.batch_size < 0:
         raise ValueError("Batch size must be a positive integer")
 
-    if cli_args.discount < 0.0 or cli_args.discount > 1.0:
+    if cli_args.gamma < 0.0 or cli_args.gamma > 1.0:
         raise ValueError("Discounting power must lie in range [0, 1]")
 
     if cli_args.learning_rate < 0.0:
@@ -165,7 +165,7 @@ def build_training_config(
         epsilon_decay=cli_args.epsilon_decay,
         num_episodes=cli_args.num_episodes,
         batch_size=cli_args.batch_size,
-        discount=cli_args.discount,
+        gamma=cli_args.gamma,
         optimiser=optim.AdamW(
             parameters, lr=cli_args.learning_rate, amsgrad=True
         ),

@@ -99,11 +99,11 @@ def train(
                 replay_memory.append_main(exp)
 
             # Optimize the *policy network* by one step
-            this_loss = optimize_one_step(
+            this_loss = _optimize_one_step(
                 dqn,
                 replay_memory=replay_memory,
                 batch_size=training_config.batch_size,
-                discount=training_config.discount,
+                gamma=training_config.gamma,
                 loss_fn=training_config.loss_fn,
                 optimizer=training_config.optimiser,
                 device=training_config.device,
@@ -164,7 +164,7 @@ def _optimize_one_step(
     *,
     replay_memory: ReplayMemory,
     batch_size: int,
-    discount: float,
+    gamma: float,
     loss_fn: torch.nn.modules.loss._Loss,
     optimizer: optim.Optimizer,
     device: torch.device,
@@ -244,7 +244,7 @@ def _optimize_one_step(
             ddqn.tnet(non_final_next_states).max(1).values
         )
     target_state_action_values = (
-        reward_batch.squeeze(1) + discount * target_next_state_values
+        reward_batch.squeeze(1) + gamma * target_next_state_values
     )  # (batch_size,)
 
     this_loss = loss_fn(
