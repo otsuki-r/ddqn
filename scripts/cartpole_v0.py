@@ -27,9 +27,8 @@ if __name__ == "__main__":
         env = gym.make("CartPole-v1", render_mode="human")
         run(ddqn, env=env, weights_dir=cli_args.outdir)
     else:
-        logger.info("Training with args %s", vars(cli_args))
+        logger.info("Training args: %s", vars(cli_args))
 
-        # Set up training
         replay_memory: ReplayMemory[StateChange] = ReplayMemory(10_000)
         training_config = build_training_config(
             cli_args, env_config, parameters=ddqn.pnet.parameters()
