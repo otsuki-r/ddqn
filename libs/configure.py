@@ -1,6 +1,6 @@
 import argparse
 from dataclasses import dataclass
-from typing import Callable, Iterator
+from typing import Iterator
 
 import gymnasium
 import torch
@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from gymnasium.envs.registration import Env
 from .action_selection import (
+    ActionSelector,
     make_epsilon_greedy,
     make_epsilon_greedy_with_bloom_filter,
 )
@@ -84,7 +85,7 @@ parser.add_argument(
 
 @dataclass
 class TrainingConfig:
-    action_selector: Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
+    action_selector: ActionSelector
     epsilon_start: float
     epsilon_end: float
     epsilon_decay: float
@@ -157,13 +158,13 @@ def build_training_config(
     parameters: Iterator[nn.Parameter],
 ) -> TrainingConfig:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    action_selector: Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
     if cli_args.use_bloom:
         action_selector = make_epsilon_greedy_with_bloom_filter(
             env=env_config.env, device=device
         )
     else:
         action_selector = make_epsilon_greedy(env=env_config.env, device=device)
+
     return TrainingConfig(
         action_selector=action_selector,
         epsilon_start=cli_args.epsilon_start,

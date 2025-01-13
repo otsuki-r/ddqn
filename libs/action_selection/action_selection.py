@@ -6,12 +6,14 @@ import torch.nn as nn
 from gymnasium import Env
 from ..structures import BloomFilter
 
+ActionSelector = Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
+
 
 def make_epsilon_greedy(
     *,
     env: Env,
     device: torch.device,
-) -> Callable[[float, torch.Tensor, nn.Module], torch.Tensor]:
+) -> ActionSelector:
     def inner(
         this_epsilon: float,
         state: torch.Tensor,
@@ -32,7 +34,7 @@ def make_epsilon_greedy_with_bloom_filter(
     *,
     device: torch.device,
     env: Env,
-) -> Callable[[float, torch.Tensor, nn.Module], torch.Tensor]:
+) -> ActionSelector:
     bloom_filter = BloomFilter[tuple[torch.Tensor, int]](10_000)
 
     def inner(
