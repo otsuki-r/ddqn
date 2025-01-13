@@ -1,7 +1,7 @@
+import logging
 import pathlib
 
 import gymnasium as gym
-from ddqn.logger import logger
 from ddqn.configure import (
     build_training_config,
     get_env_config,
@@ -9,6 +9,8 @@ from ddqn.configure import (
 )
 from ddqn.structures import DoubleDQN, ReplayMemory, StateChange
 from ddqn.utils import run, train
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     cli_args = process_cli_args()
