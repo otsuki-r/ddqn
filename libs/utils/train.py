@@ -6,8 +6,8 @@ import time
 import torch
 import torch.optim as optim
 
-from .logger import logger, progress_manager
-from .configure import EnvConfig, TrainingConfig
+from ..logger import logger, progress_manager
+from ..configure import EnvConfig, TrainingConfig
 from .dqn import DoubleDQN
 from .plot import (
     plot_episode_durations,
