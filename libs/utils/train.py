@@ -6,16 +6,16 @@ import time
 import torch
 import torch.optim as optim
 
-from ..logger import logger, progress_manager
-from ..configure import EnvConfig, TrainingConfig
-from .dqn import DoubleDQN
 from .plot import (
     plot_episode_durations,
     plot_epsilons,
     plot_losses,
     plot_rewards,
 )
-from .replay_memory import StateChange, StateChanges, ReplayMemory
+from ..logger import logger, progress_manager
+from ..configure import EnvConfig, TrainingConfig
+from ..structures.dqn import DoubleDQN
+from ..structures.replay_memory import StateChange, StateChanges, ReplayMemory
 
 
 def train(
