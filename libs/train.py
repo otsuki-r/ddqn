@@ -62,9 +62,9 @@ def train(
             )
             # Penalise if cart position is too far from center
             # n.b. -4.8 <= cart_position <= 4.8
-            # _reward -= abs(_next_state[0]) ** 2 / 20
+            _reward -= max(_next_state[0] ** 2 / 20, 0)
 
-            this_episode_reward += _reward
+            this_episode_reward += _reward  # type:ignore
 
             reward = torch.tensor(
                 [[_reward]], dtype=torch.float32, device=training_config.device
