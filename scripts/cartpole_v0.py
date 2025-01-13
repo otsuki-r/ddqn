@@ -2,14 +2,14 @@ import pathlib
 
 import gymnasium as gym
 import torch
-from dqn.logger import logger
-from dqn.configure import (
+from ddqn.logger import logger
+from ddqn.configure import (
     build_training_config,
     get_env_config,
     process_cli_args,
 )
-from dqn.structures import DoubleDQN, ReplayMemory, StateChange
-from dqn.utils import train
+from ddqn.structures import DoubleDQN, ReplayMemory, StateChange
+from ddqn.utils import train
 
 if __name__ == "__main__":
     # Configuration
