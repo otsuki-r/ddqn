@@ -1,7 +1,6 @@
 import pathlib
 
 import gymnasium as gym
-import torch
 from ddqn.logger import logger
 from ddqn.configure import (
     build_training_config,
