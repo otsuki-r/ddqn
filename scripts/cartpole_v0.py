@@ -12,15 +12,12 @@ from ddqn.structures import DoubleDQN, ReplayMemory, StateChange
 from ddqn.utils import train
 
 if __name__ == "__main__":
-    # Configuration
     cli_args = process_cli_args()
     env_config = get_env_config(cli_args)
-    logger.info("Running with args %s", vars(cli_args))
 
     outdir = pathlib.Path(cli_args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # Neural net to train
     ddqn = DoubleDQN(
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,
@@ -53,6 +50,8 @@ if __name__ == "__main__":
             env.close()
             time.sleep(1)
     else:
+        logger.info("Training with args %s", vars(cli_args))
+
         # Set up training
         replay_memory: ReplayMemory[StateChange] = ReplayMemory(10_000)
         training_config = build_training_config(
