@@ -21,7 +21,7 @@ if __name__ == "__main__":
     outdir.mkdir(parents=True, exist_ok=True)
 
     # Neural net to train
-    dqn = DoubleDQN(
+    ddqn = DoubleDQN(
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,
     )
@@ -56,11 +56,11 @@ if __name__ == "__main__":
         # Set up training
         replay_memory: ReplayMemory[StateChange] = ReplayMemory(10_000)
         training_config = build_training_config(
-            cli_args, env_config, parameters=dqn.pnet.parameters()
+            cli_args, env_config, parameters=ddqn.pnet.parameters()
         )
 
         train(
-            dqn,
+            ddqn,
             env_config=env_config,
             training_config=training_config,
             replay_memory=replay_memory,

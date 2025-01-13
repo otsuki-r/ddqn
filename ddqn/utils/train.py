@@ -19,7 +19,7 @@ from ..structures.replay_memory import StateChange, StateChanges, ReplayMemory
 
 
 def train(
-    dqn: DoubleDQN,
+    ddqn: DoubleDQN,
     *,
     env_config: EnvConfig,
     training_config: TrainingConfig,
@@ -32,7 +32,7 @@ def train(
         unit="episodes",
         color="green",
     )
-    dqn = dqn.to(training_config.device)
+    ddqn = ddqn.to(training_config.device)
 
     state: torch.Tensor
     next_state: None | torch.Tensor
@@ -59,7 +59,7 @@ def train(
             ) * math.exp(-global_step_number * training_config.epsilon_decay)
 
             action = training_config.action_selector(
-                this_epsilon, state, dqn.pnet
+                this_epsilon, state, ddqn.pnet
             )
 
             _next_state, _reward, terminated, truncated, _ = (
@@ -99,7 +99,7 @@ def train(
 
             # Optimize the *policy network* by one step
             this_loss = _optimize_one_step(
-                dqn,
+                ddqn,
                 replay_memory=replay_memory,
                 batch_size=training_config.batch_size,
                 gamma=training_config.gamma,
@@ -109,7 +109,7 @@ def train(
             )
 
             # Update the *target network* by one step
-            _update_one_step(dqn, tau=training_config.tau)
+            _update_one_step(ddqn, tau=training_config.tau)
 
             epsilons.append(this_epsilon)
             global_step_number += 1
@@ -151,7 +151,7 @@ def train(
     plot_losses(losses, outdir / "losses.png")
     plot_rewards(rewards, outdir / "rewards.png")
     plot_epsilons(epsilons, outdir / "epsilons.png")
-    dqn.save(outdir)
+    ddqn.save(outdir)
 
     logger.debug("Finished training")
     logger.debug(f"Time taken: {time.time() - start:.3f}s")
