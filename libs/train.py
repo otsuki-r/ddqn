@@ -206,6 +206,31 @@ def _optimize_one_step(
     values at the same time. The networks maintain $Q(s_t)$ and the
     state-action value function $Q(s_t, a_i)$ of action i is given by
     the ith column of $Q(s_t)$.
+
+    Parameters
+    ----------
+    ddqn : DoubleDQN
+        Double DQN instance being trained.
+    replay_memory : ReplayMemory
+        Experience of the target network.
+    batch_size : int
+        Num. experiences to sample from `replay_memory` per step.
+    gamma : float
+        Discount rate of future rewards.
+    loss_fn : torch.nn.modules.loss._Loss,
+        Loss function to train with.
+    optimizer : optim.Optimizer
+        Optimiser to train with.
+    device : torch.device,
+        Device to train with.
+
+    Returns
+    -------
+    float | None
+        Loss of this step if `replay_memory` has sufficient
+        experience to sample from. If `replay_memory` does not have
+        sufficient experience to sample from, no optimisation is
+        conducted on this step, and `None` is returned.
     """
 
     sample_state_changes = replay_memory.sample(batch_size, 0.05)
