@@ -133,7 +133,7 @@ def process_cli_args() -> argparse.Namespace:
     if cli_args.alpha < 0.0:
         raise ValueError("Learning rate must be positive")
 
-    if cli_args.update_rate < 0.0 or cli_args.update_rate > 1.0:
+    if cli_args.tau < 0.0 or cli_args.tau > 1.0:
         raise ValueError("Update rate must lie in range [0, 1]")
 
     return cli_args
