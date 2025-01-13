@@ -47,7 +47,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--gamma",
-    help="Discounting power of past actions in computing reward",
+    help="Discounting power γ of past actions in computing reward",
     type=float,
     default=0.95,
 )
