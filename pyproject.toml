@@ -4,6 +4,12 @@ version = "0.0.1"
 description = "Experiments in training a doubled DQN (DDQN)"
 requires-python = ">=3.12"
 readme = "README.md"
+dependencies = [
+    "enlighten",
+    "gymnasium>=1.0",
+    "matplotlib",
+    "torch>=2.5",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
