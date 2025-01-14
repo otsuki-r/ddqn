@@ -108,9 +108,11 @@ def train(
                 reward=reward,
                 next_state=next_state,
             )
-            if episode_num < training_config.num_episodes // 3:
+
+            # Conditionally append to replay memory
+            if episode_num < ddqn.replay_memory.warmup_episodes_upper:
                 ddqn.replay_memory.append_warmup(exp)
-            if episode_num > training_config.num_episodes // 10:
+            if episode_num > ddqn.replay_memory.main_episodes_lower:
                 ddqn.replay_memory.append_main(exp)
 
             # Optimize the *policy network* by one step
