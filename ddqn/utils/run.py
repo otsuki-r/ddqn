@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def run(
-    ddqn: DoubleDQN, *, env: gymnasium.Env, weights_dir: pathlib.Path
+    ddqn: DoubleDQN, env: gymnasium.Env, weights_dir: pathlib.Path
 ) -> NoReturn:
     """
     Run the model in the environment `env` using random seeds at each
