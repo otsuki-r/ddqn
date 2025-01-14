@@ -1,5 +1,7 @@
 import logging
+import os
 import pathlib
+import sys
 
 import gymnasium as gym
 from ddqn.configure import (
@@ -10,7 +12,11 @@ from ddqn.configure import (
 from ddqn.structures import DoubleDQN, ReplayMemory, StateChange
 from ddqn.utils import run, train
 
-logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO").upper(), stream=sys.stdout
+)
+logging.getLogger("ddqn").setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
     cli_args = process_cli_args()
