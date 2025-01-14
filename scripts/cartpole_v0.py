@@ -62,6 +62,9 @@ if __name__ == "__main__":
     outdir.mkdir(parents=True, exist_ok=True)
 
     ddqn = DoubleDQN(
+        memory_size=cli_args.memory_size,
+        warmup_episodes_upper=cli_args.warmup_episodes_upper,
+        main_episodes_lower=cli_args.main_episodes_lower,
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,
     )
