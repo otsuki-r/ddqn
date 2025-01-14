@@ -31,7 +31,23 @@ class StateChanges:
 
 
 class ReplayMemory(Generic[T]):
-    def __init__(self, capacity: int) -> None:
+    """
+    Replay memory to store the target networks' experiences in and
+    with which to train the policy network with. We maintain two
+    working memories; a warmup memory and a main memory.
+
+    The former will primarliy hold 'bad' experiences early on
+    when the target network primarily selects the next action at
+    random. The latter will primarily hold 'good' experiences from
+    later on in the training.
+
+    When sampling from memory, we always inject a small amount of
+    'bad' experiences from the warmup memory to try and discourage
+    catastrophic forgetting wherein the network can forget how to
+    handle a 'bad' state as it had seen 'good' states for so long in
+    the training.
+    """
+
     def __init__(
         self,
         capacity: int,
