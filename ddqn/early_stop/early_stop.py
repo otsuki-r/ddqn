@@ -1,18 +1,21 @@
 import logging
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from mypy_extensions import NamedArg
 
+    EarlyReturnFn = Callable[
+        [
+            NamedArg(list[int], "episode_durations"),
+            NamedArg(list[float], "rewards"),
+            NamedArg(list[float], "losses"),
+        ],
+        bool,
+    ]
+else:
+    EarlyReturnFn = Any
+
 logger = logging.getLogger(__name__)
-EarlyReturnFn = Callable[
-    [
-        NamedArg(list[int], "episode_durations"),
-        NamedArg(list[float], "rewards"),
-        NamedArg(list[float], "losses"),
-    ],
-    bool,
-]
 
 
 def _winsorised_mean(
