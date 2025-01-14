@@ -17,19 +17,19 @@ from .action_selection import (
 parser = argparse.ArgumentParser("bloom_cart_pole")
 parser.add_argument(
     "--epsilon-start",
-    help="Start value for parameter used in epsilon-greedy action selection.",
+    help="Start value for ε used in epsilon-greedy action selection.",
     type=float,
     default=0.90,
 )
 parser.add_argument(
     "--epsilon-end",
-    help="End value for parameter used in epsilon-greedy action selection.",
+    help="End value for ε used in epsilon-greedy action selection.",
     type=float,
     default=0.05,
 )
 parser.add_argument(
     "--epsilon-decay",
-    help="Decay rate for parameter used in epsilon-greedy action selection.",
+    help="Exponential decay rate of ε used in epsilon-greedy action selection.",
     type=float,
     default=1e-4,
 )
@@ -37,7 +37,7 @@ parser.add_argument(
     "--num-episodes",
     help="Number of episodes to train for.",
     type=int,
-    default=50,
+    default=600,
 )
 parser.add_argument(
     "--batch-size",
