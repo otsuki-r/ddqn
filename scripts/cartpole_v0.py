@@ -1,4 +1,5 @@
 import argparse
+import functools
 import logging
 import os
 import pathlib
@@ -16,14 +17,34 @@ logging.basicConfig(
 logging.getLogger("ddqn").setLevel(logging.DEBUG)
 
 
+class CenteredCartPole(gym.Env):
+    def __init__(self, eval: bool = False) -> None:
+        render_mode = "human" if cli_args.eval else None
+        self.env = gym.make("CartPole-v1", render_mode=render_mode)
+
+        def penalise_non_centered(fn):
+            @functools.wraps(fn)
+            def inner(*args, **kwargs):
+                next_state, reward, *g = fn(*args, **kwargs)
+
+                # Penalise if cart position is too far from center
+                # n.b. -2.4 <= cart_position <= 2.4
+                reward -= min(next_state[0] ** 2 * 10, 1)
+
+                return next_state, reward, *g
+
+            return inner
+
+        setattr(self.env, "step", penalise_non_centered(self.env.step))
+
+
 def make_env_config(cli_args: argparse.Namespace) -> EnvConfig:
-    render_mode = "human" if cli_args.eval else None
-    env = gym.make("CartPole-v1", render_mode=render_mode)
-    initial_state, _ = env.reset(seed=42)
+    cart_pole = CenteredCartPole(cli_args.eval)
+    initial_state, _ = cart_pole.env.reset(seed=42)
 
     return EnvConfig(
-        env=env,
-        action_space_size=int(env.action_space.n),  # type: ignore
+        env=cart_pole.env,
+        action_space_size=int(cart_pole.env.action_space.n),  # type: ignore
         state_space_size=len(initial_state),
     )
 
