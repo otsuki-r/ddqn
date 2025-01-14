@@ -30,7 +30,7 @@ class StateChanges:
         self.next_states = [s.next_state for s in state_changes]
 
 
-class ReplayMemory(Generic[T]):
+class DoubleReplayMemory(Generic[T]):
     """
     Replay memory to store the target networks' experiences in and
     with which to train the policy network with. We maintain two
