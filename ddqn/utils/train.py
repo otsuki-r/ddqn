@@ -16,7 +16,7 @@ from .plot import (
 )
 from ..configure import EnvConfig, TrainingConfig
 from ..structures.dqn import DoubleDQN
-from ..structures.replay_memory import StateChange, StateChanges, ReplayMemory
+from ..structures.replay_memory import StateChange, StateChanges
 
 logger = logging.getLogger(__name__)
 progress_manager = enlighten.get_manager()
@@ -27,7 +27,6 @@ def train(
     *,
     env_config: EnvConfig,
     training_config: TrainingConfig,
-    replay_memory: ReplayMemory[StateChange],
     outdir: pathlib.Path,
 ) -> None:
     pbar = progress_manager.counter(
@@ -97,14 +96,13 @@ def train(
                 next_state=next_state,
             )
             if episode_num < training_config.num_episodes // 3:
-                replay_memory.append_warmup(exp)
+                ddqn.replay_memory.append_warmup(exp)
             if episode_num > training_config.num_episodes // 10:
-                replay_memory.append_main(exp)
+                ddqn.replay_memory.append_main(exp)
 
             # Optimize the *policy network* by one step
             this_loss = _optimize_one_step(
                 ddqn,
-                replay_memory=replay_memory,
                 batch_size=training_config.batch_size,
                 gamma=training_config.gamma,
                 loss_fn=training_config.loss_fn,
@@ -165,7 +163,6 @@ def train(
 def _optimize_one_step(
     ddqn: DoubleDQN,
     *,
-    replay_memory: ReplayMemory,
     batch_size: int,
     gamma: float,
     loss_fn: torch.nn.modules.loss._Loss,
@@ -214,8 +211,6 @@ def _optimize_one_step(
     ----------
     ddqn : DoubleDQN
         Double DQN instance being trained.
-    replay_memory : ReplayMemory
-        Experience of the target network.
     batch_size : int
         Num. experiences to sample from `replay_memory` per step.
     gamma : float
@@ -236,7 +231,7 @@ def _optimize_one_step(
         conducted on this step, and `None` is returned.
     """
 
-    sample_state_changes = replay_memory.sample(batch_size, 0.05)
+    sample_state_changes = ddqn.replay_memory.sample(batch_size, 0.05)
     if sample_state_changes is None:
         return None
 

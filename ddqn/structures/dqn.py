@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as fn
 
+from .replay_memory import ReplayMemory, StateChange
+
 
 class DQNParams(TypedDict):
     n_observations: int
@@ -26,7 +28,11 @@ class DQN(nn.Module):
 
 
 class DoubleDQN:
-    def __init__(self, **kwargs: Unpack[DQNParams]) -> None:
+    def __init__(
+        self, memory_size: int = 10_000, **kwargs: Unpack[DQNParams]
+    ) -> None:
+        self.replay_memory: ReplayMemory[StateChange] = ReplayMemory(10_000)
+
         self.pnet = DQN(**kwargs)  # policy network for selecting action
         self.tnet = DQN(**kwargs)  # target network for evaluating action
 

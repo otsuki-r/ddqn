@@ -6,7 +6,7 @@ import sys
 
 import gymnasium as gym
 from ddqn.configure import EnvConfig, build_training_config, process_cli_args
-from ddqn.structures import DoubleDQN, ReplayMemory, StateChange
+from ddqn.structures import DoubleDQN
 from ddqn.utils import run, train
 
 
@@ -43,7 +43,6 @@ if __name__ == "__main__":
     if cli_args.eval:
         run(ddqn, env=env_config.env, weights_dir=cli_args.outdir)
     else:
-        replay_memory: ReplayMemory[StateChange] = ReplayMemory(10_000)
         training_config = build_training_config(
             cli_args, env_config, parameters=ddqn.pnet.parameters()
         )
@@ -52,6 +51,5 @@ if __name__ == "__main__":
             ddqn,
             env_config=env_config,
             training_config=training_config,
-            replay_memory=replay_memory,
             outdir=outdir,
         )
