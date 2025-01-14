@@ -18,6 +18,11 @@ logging.getLogger("ddqn").setLevel(logging.DEBUG)
 
 
 class CenteredCartPole(gym.Env):
+    """
+    Modified CartPole env with a penalty to encourage it to stay in
+    the middle of the viewport.
+    """
+
     def __init__(self, eval: bool = False) -> None:
         render_mode = "human" if cli_args.eval else None
         self.env = gym.make("CartPole-v1", render_mode=render_mode)
