@@ -42,9 +42,7 @@ EPSILON_PLOT_CONFIG = PlotConfig(
 )
 
 
-def _plot(
-    data: list[T], *, path: pathlib.Path, plot_config: PlotConfig
-) -> None:
+def _plot(data: list[T], path: pathlib.Path, plot_config: PlotConfig) -> None:
     """
     Plot data according to `plot_config`, saving output to `path`.
 
@@ -57,6 +55,7 @@ def _plot(
     plot_config : PlotConfig
         Configuration for plotting the data.
     """
+
     plt.figure(plot_config.plot_id)
     plt.title(plot_config.title)
     plt.xlabel(plot_config.xlabel)

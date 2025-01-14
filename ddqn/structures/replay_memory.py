@@ -76,6 +76,25 @@ class DoubleReplayMemory(Generic[T]):
         self.main_memory = deque[T]([], maxlen=capacity)
 
     def sample(self, batch_size: int, frac: float = 0.05) -> list[T] | None:
+        """
+        Sample from the main memory. If `frac` is not zero, then
+        a proportionate number of samples will be drawn from the
+        warmup memory.
+
+        Parameters
+        ----------
+        batch_size : int
+            Total number of objects to sample from memory.
+        frac : float, optional
+            Proportion of samples to take from warmup memory.
+
+        Returns
+        -------
+        list[T] | None
+            `None` if there are insufficient elements in the two
+            memories to sample from. Otherwise, `list[T]` of samples.
+        """
+
         num_warmup_samples = int(batch_size * frac)
         num_main_samples = batch_size - num_warmup_samples
 
@@ -93,7 +112,25 @@ class DoubleReplayMemory(Generic[T]):
         ) + random.sample(self.main_memory, num_main_samples)
 
     def append_warmup(self, sample: T) -> None:
+        """
+        Append to warmup memory.
+
+        Parameters
+        ----------
+        sample : T
+            Object to insert into warmup memory.
+        """
+
         self.warmup_memory.append(sample)
 
     def append_main(self, sample: T) -> None:
+        """
+        Append to main memory.
+
+        Paramaters
+        ----------
+        sample : T
+            Object to isnert into main memory.
+        """
+
         self.main_memory.append(sample)

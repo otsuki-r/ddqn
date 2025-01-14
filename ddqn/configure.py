@@ -107,6 +107,15 @@ class EnvConfig:
 
 
 def process_cli_args() -> argparse.Namespace:
+    """
+    Parse and validate arguments from the CLI
+
+    Returns
+    -------
+    argparse.Namespace
+        Parsed CLI args.
+    """
+
     cli_args = parser.parse_args()
 
     if cli_args.epsilon_start < 0.0 or cli_args.epsilon_start > 1.0:
@@ -144,6 +153,25 @@ def build_training_config(
     env_config: EnvConfig,
     parameters: Iterator[nn.Parameter],
 ) -> TrainingConfig:
+    """
+    Collate CLI args and environment configurations into a training
+    configuration.
+
+    Parameters
+    ----------
+    cli_args : argparse.Namespace
+        Args parsed from the command line.
+    env_config : EnvConfig
+        Configuration of the environment to train in.
+    parameters : Iterator[nn.Paramter]
+        Parameters of the neural net being trained.
+
+    Returns
+    -------
+    TrainingConfig
+        Traning configuration constructed from inputs.
+    """
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if cli_args.use_bloom:
         action_selector = make_epsilon_greedy_with_bloom_filter(

@@ -67,8 +67,8 @@ def winsorised_durations_early_return(
     Returns
     --------
     EarlyReturnFn
-        Function that computes an whether to return early from
-        training based on the outputs of the last few episodes.
+        Function that computes whether to return early from training
+        based on the outputs of the last few episodes.
     """
 
     def inner(
@@ -78,12 +78,23 @@ def winsorised_durations_early_return(
         losses: list[float],
     ) -> bool:
         """
+        Inner decision fucntion. Computes the winsorised mean
+        according to the parameters in the constructor, and compares
+        it to the supplied thresold.
+
+        Parameters
+        ----------
         epsiode_durations : list[int]
             Durations of each episode.
         rewards : list[float]
             Cumulative rewards of each epsiode.
         losses : list[float]
             Final loss of each episode.
+
+        Returns
+        -------
+        bool
+            Whether we should stop training early or not.
         """
 
         try:
@@ -94,7 +105,7 @@ def winsorised_durations_early_return(
             return False
 
         if wmean > score_threshold:
-            logger.info("Early finish")
+            logger.info("Stopping training early.")
             return True
         return False
 
