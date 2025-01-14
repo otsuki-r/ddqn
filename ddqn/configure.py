@@ -2,7 +2,6 @@ import argparse
 from dataclasses import dataclass
 from typing import Iterator
 
-import gymnasium
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -101,7 +100,6 @@ class TrainingConfig:
 @dataclass
 class EnvConfig:
     env: Env
-    max_episode_length: int
     action_space_size: int
     state_space_size: int
 
@@ -137,19 +135,6 @@ def process_cli_args() -> argparse.Namespace:
         raise ValueError("Update rate must lie in range [0, 1]")
 
     return cli_args
-
-
-def get_env_config(cli_args: argparse.Namespace) -> EnvConfig:
-    env = gymnasium.make(
-        "CartPole-v1", render_mode="human" if cli_args.eval else None
-    )
-    initial_state, _ = env.reset(seed=42)
-    return EnvConfig(
-        env=env,
-        max_episode_length=500,
-        action_space_size=int(env.action_space.n),  # type: ignore
-        state_space_size=len(initial_state),
-    )
 
 
 def build_training_config(
