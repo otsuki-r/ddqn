@@ -41,13 +41,13 @@ def _winsorised_mean(
             clip_upper,
         )
 
-    return sum(list(sorted(vals))[clip_lower:-clip_upper]) / (
+    return sum(list(sorted(vals))[clip_lower : len(vals) - clip_upper]) / (
         len(vals) - clip_lower - clip_upper
     )
 
 
 def winsorised_durations_early_return(
-    last_n: int, score_threshold: float
+    *, last_n: int, clip_lower: int, clip_upper: int, score_threshold: float
 ) -> EarlyReturnFn:
     """
     Makes an early stopping condition based on winsorised means of
@@ -57,6 +57,10 @@ def winsorised_durations_early_return(
     ----------
     last_n : int
         Number of latest episodes to consider.
+    clip_lower : int
+        Number of smallest values to ignore.
+    clip_upper : int
+        Number of largest values to ignore.
     score_threshold : float
         Minimum average score to decide whether to return early on.
 
@@ -83,7 +87,9 @@ def winsorised_durations_early_return(
         """
 
         try:
-            wmean = _winsorised_mean(rewards[-last_n:])
+            wmean = _winsorised_mean(
+                rewards[-last_n:], clip_lower=clip_lower, clip_upper=clip_upper
+            )
         except ValueError:
             return False
 

@@ -164,5 +164,7 @@ def build_training_config(
         tau=cli_args.tau,
         loss_fn=nn.SmoothL1Loss(),
         device=device,
-        early_return=winsorised_durations_early_return(20, 470),
+        early_return=winsorised_durations_early_return(
+            last_n=20, clip_lower=5, clip_upper=0, score_threshold=470.0
+        ),
     )
