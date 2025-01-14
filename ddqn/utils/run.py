@@ -55,5 +55,4 @@ def run(
         logger.debug("This episode duration: %s", this_duration)
 
         iteration += 1
-        env.close()
         time.sleep(1)
