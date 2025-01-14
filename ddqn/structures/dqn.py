@@ -35,6 +35,19 @@ class DoubleDQN:
         main_episodes_lower: int,
         **kwargs: Unpack[DQNParams],
     ) -> None:
+        """
+        Initialise the DDQN.
+
+        Parameters
+        ----------
+        memory_size : int
+            Capacity of replay memory.
+        warmup_episodes_upper : int
+            Warmup memory stopping parameter.
+        main_episodes_lower : int
+            Main memory starting parameter.
+        """
+
         self.replay_memory: DoubleReplayMemory[StateChange] = (
             DoubleReplayMemory(
                 memory_size,
