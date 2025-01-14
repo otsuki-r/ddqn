@@ -37,10 +37,15 @@ def run(
     iteration = 0
     while True:
         this_seed = random.randint(1, 1_000_000)
-        logger.debug("Scene: %s, seed: %s", iteration, this_seed)
 
         _state, _ = env.reset(seed=this_seed)
         state = torch.tensor(_state, dtype=torch.float32)
+        logger.debug(
+            "Scene: %s, seed: %s, initial_state: %s",
+            iteration,
+            this_seed,
+            _state,
+        )
 
         completed = False
         this_duration = 0
