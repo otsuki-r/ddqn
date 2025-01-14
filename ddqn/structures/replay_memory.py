@@ -75,7 +75,7 @@ class DoubleReplayMemory(Generic[T]):
         self.warmup_memory = deque[T]([], maxlen=capacity)
         self.main_memory = deque[T]([], maxlen=capacity)
 
-    def sample(self, batch_size: int, frac: float) -> list[T] | None:
+    def sample(self, batch_size: int, frac: float = 0.05) -> list[T] | None:
         num_warmup_samples = int(batch_size * frac)
         num_main_samples = batch_size - num_warmup_samples
 
