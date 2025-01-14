@@ -6,9 +6,12 @@ import pathlib
 import sys
 
 import gymnasium as gym
+import torch.optim as optim
+import torch.nn as nn
 from ddqn.configure import EnvConfig, build_training_config, process_cli_args
 from ddqn.structures import DoubleDQN
 from ddqn.utils import run, train
+from ddqn.early_stop import winsorised_durations_early_return
 
 
 logging.basicConfig(
@@ -72,8 +75,20 @@ if __name__ == "__main__":
     if cli_args.eval:
         run(ddqn, env=env_config.env, weights_dir=outdir)
     else:
+        optimiser = optim.AdamW(
+            ddqn.pnet.parameters(), lr=cli_args.alpha, amsgrad=True
+        )
+        loss_fn = nn.SmoothL1Loss()
+        early_return_fn = winsorised_durations_early_return(
+            last_n=20, clip_lower=5, clip_upper=0, score_threshold=470.0
+        )
+
         training_config = build_training_config(
-            cli_args, env_config, parameters=ddqn.pnet.parameters()
+            cli_args,
+            env_config,
+            optimiser=optimiser,
+            loss_fn=loss_fn,
+            early_return_fn=early_return_fn,
         )
 
         train(

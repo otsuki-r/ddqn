@@ -11,7 +11,7 @@ from .action_selection import (
     make_epsilon_greedy,
     make_epsilon_greedy_with_bloom_filter,
 )
-from .early_stop import EarlyReturnFn, winsorised_durations_early_return
+from .early_stop import EarlyReturnFn
 
 
 parser = argparse.ArgumentParser("bloom_cart_pole")
@@ -96,7 +96,7 @@ class TrainingConfig:
     tau: float
     loss_fn: torch.nn.modules.loss._Loss
     device: torch.device
-    early_return: EarlyReturnFn | None
+    early_return_fn: EarlyReturnFn | None
 
 
 @dataclass
@@ -151,7 +151,10 @@ def process_cli_args() -> argparse.Namespace:
 def build_training_config(
     cli_args: argparse.Namespace,
     env_config: EnvConfig,
-    parameters: Iterator[nn.Parameter],
+    *,
+    optimiser: optim.Optimizer,
+    loss_fn: nn.module.loss._Loss,
+    early_return_fn: EarlyReturnFn | None = None,
 ) -> TrainingConfig:
     """
     Collate CLI args and environment configurations into a training
@@ -163,8 +166,12 @@ def build_training_config(
         Args parsed from the command line.
     env_config : EnvConfig
         Configuration of the environment to train in.
-    parameters : Iterator[nn.Paramter]
-        Parameters of the neural net being trained.
+    optimiser : optim.Optimizer
+        Optimizer to use.
+    loss : nn.module.loss._Loss,
+        Loss function to use,
+    early_return_fn : EarlyReturnFn | None, optional
+        Condition to return early from training.
 
     Returns
     -------
@@ -188,11 +195,9 @@ def build_training_config(
         num_episodes=cli_args.num_episodes,
         batch_size=cli_args.batch_size,
         gamma=cli_args.gamma,
-        optimiser=optim.AdamW(parameters, lr=cli_args.alpha, amsgrad=True),
+        optimiser=optimiser,
         tau=cli_args.tau,
-        loss_fn=nn.SmoothL1Loss(),
+        loss_fn=loss_fn,
         device=device,
-        early_return=winsorised_durations_early_return(
-            last_n=20, clip_lower=5, clip_upper=0, score_threshold=470.0
-        ),
+        early_return_fn=early_return_fn,
     )

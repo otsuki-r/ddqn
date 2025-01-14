@@ -150,7 +150,7 @@ def train(
                 state = next_state
         pbar.update()
 
-        if training_config.early_return and training_config.early_return(
+        if training_config.early_return_fn and training_config.early_return_fn(
             episode_durations=episode_durations, rewards=rewards, losses=losses
         ):
             break
