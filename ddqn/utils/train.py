@@ -248,10 +248,9 @@ def _optimize_one_step(
     reward_batch = torch.cat(this_batch.rewards)  # (batch_size, 1)
 
     # Compute predictions $Q^{\text{policy}}(s_t, a_t)$.
-    # (batch_size, dim(action_space) -> (batch_size, 1) -> (batch_size,)
     predicted_state_action_values = (
         ddqn.pnet(state_batch).gather(1, action_batch).squeeze(1)
-    )
+    )  # (batch_size, dim(action_space) -> (batch_size, 1) -> (batch_size,)
 
     # Compute target values
     # $Q^{\text{target}}(s_t, a_t) = r_t + \gamma V^{\text{target}}(s_{t+1})$.
