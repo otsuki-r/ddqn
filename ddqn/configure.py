@@ -11,6 +11,7 @@ from .action_selection import (
     make_epsilon_greedy,
     make_epsilon_greedy_with_bloom_filter,
 )
+from .early_stop import EarlyReturnFn, winsorised_durations_early_return
 
 
 parser = argparse.ArgumentParser("bloom_cart_pole")
@@ -95,6 +96,7 @@ class TrainingConfig:
     tau: float
     loss_fn: torch.nn.modules.loss._Loss
     device: torch.device
+    early_return: EarlyReturnFn | None
 
 
 @dataclass
@@ -162,4 +164,5 @@ def build_training_config(
         tau=cli_args.tau,
         loss_fn=nn.SmoothL1Loss(),
         device=device,
+        early_return=winsorised_durations_early_return(20, 470),
     )

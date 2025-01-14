@@ -29,6 +29,23 @@ def train(
     training_config: TrainingConfig,
     outdir: pathlib.Path,
 ) -> None:
+    """
+    Main training loop. Trains `ddqn` in the environment set up in
+    `env_config` with training parameters specified in
+    `training_config`. Saves results to `outdir`.
+
+    Parameters
+    ----------
+    ddqn : DoubleDQN
+        Model to train.
+    env_config : EnvConfig
+        RL environment configuration.
+    training_config :
+        Training configuration.
+    outdir : pathlib.Path
+        Directory to save results to
+    """
+
     pbar = progress_manager.counter(
         total=training_config.num_episodes,
         desc="Episode num.",
@@ -131,18 +148,9 @@ def train(
                 state = next_state
         pbar.update()
 
-        def winsorised_mean(vals: list[int], clip: int = 5) -> float:
-            if len(vals) <= clip:
-                raise ValueError("Too few values to winsorize (clip=%s)", clip)
-            return sum(list(sorted(vals))[clip:]) / (len(vals) - clip)
-
-        try:
-            wmean = winsorised_mean(episode_durations[-20:])
-        except ValueError:
-            continue
-
-        if wmean > 480.0:
-            logger.info("Early finish")
+        if training_config.early_return and training_config.early_return(
+            episode_durations=episode_durations, rewards=rewards, losses=losses
+        ):
             break
 
     plot_episode_durations(episode_durations, outdir / "episode_durations.png")
