@@ -41,7 +41,7 @@ if __name__ == "__main__":
     )
 
     if cli_args.eval:
-        run(ddqn, env=env_config.env, weights_dir=cli_args.outdir)
+        run(ddqn, env=env_config.env, weights_dir=outdir)
     else:
         training_config = build_training_config(
             cli_args, env_config, parameters=ddqn.pnet.parameters()
