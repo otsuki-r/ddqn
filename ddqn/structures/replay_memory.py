@@ -32,6 +32,30 @@ class StateChanges:
 
 class ReplayMemory(Generic[T]):
     def __init__(self, capacity: int) -> None:
+    def __init__(
+        self,
+        capacity: int,
+        warmup_episodes_upper: int,
+        main_episodes_lower: int,
+    ) -> None:
+        """
+        Initialise replay memory.
+
+        Parameters
+        ----------
+        capacity : int
+            Maximum size of both the warmup memory and main memories.
+        warmup_episodes_upper : int
+            Number of episodes after which appending to the warmup
+            memory will *stop*.
+        main_episodes_lower : int
+            Number of episodes after which appending to the main
+            memory will *start*.
+        """
+
+        self.warmup_episodes_upper = warmup_episodes_upper
+        self.main_episodes_lower = main_episodes_lower
+
         self.warmup_memory = deque[T]([], maxlen=capacity)
         self.main_memory = deque[T]([], maxlen=capacity)
 
