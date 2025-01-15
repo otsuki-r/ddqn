@@ -98,12 +98,9 @@ class DoubleReplayMemory(Generic[T]):
         num_warmup_samples = int(batch_size * frac)
         num_main_samples = batch_size - num_warmup_samples
 
-        if len(self.main_memory) < 500:
-            return None
-        if (
-            len(self.warmup_memory) < num_warmup_samples
-            or len(self.main_memory) < num_main_samples
-        ):
+        if len(self.warmup_memory) < num_warmup_samples or len(
+            self.main_memory
+        ) < max(num_main_samples, 4 * batch_size):
             # Pass until we have enough experience to bootstrap from
             return None
 
