@@ -1,9 +1,7 @@
 import argparse
 from dataclasses import dataclass
-from typing import Iterator
 
 import torch
-import torch.nn as nn
 import torch.optim as optim
 from gymnasium.envs.registration import Env
 from .action_selection import (
@@ -172,7 +170,7 @@ def build_training_config(
     env_config: EnvConfig,
     *,
     optimiser: optim.Optimizer,
-    loss_fn: nn.module.loss._Loss,
+    loss_fn: torch.nn.modules.loss._Loss,
     early_return_fn: EarlyReturnFn | None = None,
 ) -> TrainingConfig:
     """
@@ -187,7 +185,7 @@ def build_training_config(
         Configuration of the environment to train in.
     optimiser : optim.Optimizer
         Optimizer to use.
-    loss : nn.module.loss._Loss,
+    loss : torch.nn.modules.loss._Loss,
         Loss function to use,
     early_return_fn : EarlyReturnFn | None, optional
         Condition to return early from training.
