@@ -90,6 +90,8 @@ if __name__ == "__main__":
             ),
         )
 
+        logging.info("Training with config: %s", training_config)
+
         train(
             ddqn,
             env_config=env_config,
