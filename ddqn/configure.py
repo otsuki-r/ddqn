@@ -15,6 +15,25 @@ from .early_stop import EarlyReturnFn
 
 
 parser = argparse.ArgumentParser("bloom_cart_pole")
+
+parser.add_argument(
+    "--memory-size",
+    help="Max size of the replay memory buffer.",
+    type=int,
+    default=10_000,
+)
+parser.add_argument(
+    "--warmup-episodes-upper",
+    help="Number of episodes to append to warmup memory for",
+    type=int,
+    default=60,
+)
+parser.add_argument(
+    "--main-episodes-lower",
+    help="Number of episodes to wait before starting to append to main memory",
+    type=int,
+    default=200,
+)
 parser.add_argument(
     "--epsilon-start",
     help="Start value for ε used in epsilon-greedy action selection.",
