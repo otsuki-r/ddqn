@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as fn
 
-from .replay_memory import DoubleReplayMemory, StateChange
+from .replay_memory import DoubleReplayMemory
 
 
 class DQNParams(TypedDict):
@@ -30,9 +30,7 @@ class DQN(nn.Module):
 class DoubleDQN:
     def __init__(
         self,
-        memory_size: int,
-        warmup_episodes_upper: int,
-        main_episodes_lower: int,
+        replay_memory: DoubleReplayMemory,
         **kwargs: Unpack[DQNParams],
     ) -> None:
         """
@@ -40,22 +38,14 @@ class DoubleDQN:
 
         Parameters
         ----------
-        memory_size : int
-            Capacity of replay memory.
-        warmup_episodes_upper : int
-            Warmup memory stopping parameter.
-        main_episodes_lower : int
-            Main memory starting parameter.
+        replay_memory: DoubleReplayMemory
+            Replay memory to use to store the target network'scripts
+            experiences in.
+        kwargs : Unpack[DQNParams]
+            Parameters passed to the two underlying DQN instances.
         """
 
-        self.replay_memory: DoubleReplayMemory[StateChange] = (
-            DoubleReplayMemory(
-                memory_size,
-                warmup_episodes_upper=warmup_episodes_upper,
-                main_episodes_lower=main_episodes_lower,
-            )
-        )
-
+        self.replay_memory = replay_memory
         self.pnet = DQN(**kwargs)  # policy network for selecting action
         self.tnet = DQN(**kwargs)  # target network for evaluating action
 

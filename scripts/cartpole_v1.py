@@ -9,7 +9,7 @@ import gymnasium as gym
 import torch.optim as optim
 import torch.nn as nn
 from ddqn.configure import EnvConfig, build_training_config, process_cli_args
-from ddqn.structures import DoubleDQN
+from ddqn.structures import DoubleDQN, DoubleReplayMemory, StateChange
 from ddqn.utils import run, train
 from ddqn.early_stop import winsorised_durations_early_return
 
@@ -64,10 +64,13 @@ if __name__ == "__main__":
     outdir = pathlib.Path(cli_args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    ddqn = DoubleDQN(
-        memory_size=cli_args.memory_size,
+    replay_memory = DoubleReplayMemory[StateChange](
+        capacity=cli_args.memory_size,
         warmup_episodes_upper=cli_args.warmup_episodes_upper,
         main_episodes_lower=cli_args.main_episodes_lower,
+    )
+    ddqn = DoubleDQN(
+        replay_memory=replay_memory,
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,
     )
