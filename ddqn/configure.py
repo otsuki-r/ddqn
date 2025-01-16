@@ -94,9 +94,21 @@ parser.add_argument(
 )
 parser.add_argument(
     "--eval",
-    help="Whether to run a model stored in --outdir",
+    help="Runs the model specified in --outdir and renders the run",
     type=bool,
     action=argparse.BooleanOptionalAction,
+)
+parser.add_argument(
+    "--save",
+    help="Runs the model specified in --outdir and saves a gif of the run",
+    type=bool,
+    action=argparse.BooleanOptionalAction,
+)
+parser.add_argument(
+    "--save-path",
+    help="Path to save the resulting GIF if --save is passed.",
+    type=str,
+    default="./out/run.gif",
 )
 
 

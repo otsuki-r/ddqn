@@ -26,8 +26,7 @@ class CenteredCartPole(gym.Env):
     the middle of the viewport.
     """
 
-    def __init__(self, eval: bool = False) -> None:
-        render_mode = "human" if cli_args.eval else None
+    def __init__(self, render_mode: str | None = None) -> None:
         self.env = gym.make("CartPole-v1", render_mode=render_mode)
 
         def penalise_non_centered(fn):
@@ -47,7 +46,15 @@ class CenteredCartPole(gym.Env):
 
 
 def make_env_config(cli_args: argparse.Namespace) -> EnvConfig:
-    cart_pole = CenteredCartPole(cli_args.eval)
+    render_mode: str | None
+    if cli_args.eval:
+        render_mode = "human"
+    elif cli_args.save:
+        render_mode = "rgb_array"
+    else:
+        render_mode = None
+
+    cart_pole = CenteredCartPole(render_mode=render_mode)
     initial_state, _ = cart_pole.env.reset(seed=42)
 
     return EnvConfig(
@@ -75,8 +82,14 @@ if __name__ == "__main__":
         n_actions=env_config.action_space_size,
     )
 
-    if cli_args.eval:
-        run(ddqn, env=env_config.env, weights_dir=outdir)
+    if cli_args.eval or cli_args.save:
+        save_path = pathlib.Path(cli_args.save_path) if cli_args.save else None
+        run(
+            ddqn,
+            env=env_config.env,
+            weights_dir=outdir,
+            save_path=cli_args.save_path,
+        )
     else:
         training_config = build_training_config(
             cli_args,
