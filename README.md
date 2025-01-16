@@ -11,7 +11,7 @@ DQN methods are notoriously unstable and difficult to train. Unlike many other f
   \theta_{\text{target}} = (1 - \tau) \cdot \theta_{\text{target}} + \tau \cdot \theta_{\text{policy}}
   $$
 
-- _Huber loss_: a more robust metric for computing the TD error than L2 loss
+- [_Huber loss_](https://en.wikipedia.org/wiki/Huber_loss): a more robust metric for computing the TD error than L2 loss
   $$
   L_\text{Huber}(x, y; \delta) =
   \begin{cases}
@@ -35,7 +35,7 @@ The proposed approach here is complimentary to PER; whereas PER modifies the dis
 
 ### Setup
 
-This experiment is set to the classic cartpole problem where an agent is trained to move to keep a pole attached to the cart balanced vertically. However we modify the evnironment slightly by adding a small penalty
+This experiment is set to the classic [cartpole problem](https://gymnasium.farama.org/environments/classic_control/cart_pole/) where an agent is trained to move to keep a pole attached to the cart balanced vertically. However we modify the evnironment slightly by adding a small penalty
 $$r = - \min(10 x^2, 1), \qquad -1.2 \leq x \leq 1.2,$$
 to the reward awarded by the environment ($x$ is the x-position of the cart). This is to encourage the cart to stay in the center of the field of view, as otherwise the cart can drift slowly to the sides and still score 500 points.
 
@@ -65,7 +65,7 @@ A sample of training output is provdied below. The first plot is the cumulative 
 ![Epsiode duration](./media/cartpolev1/episode_durations.png)
 ![Loss](./media/cartpolev1/losses.png)
 
-    Note that there is an initial warmup phase of about 200 episodes where experience is gathered and added to the warmup memory, but the network weights are not trained (making this phase very quick). This is followed by about 30 or so episodes of populating the main memory and so it is only after ~230 episodes that the network start learning and the losses can be plotted.
+    Note that there is an initial warmup phase of about 200 episodes (this can most certainly be lowered with no ill effect, and is controlled by a `--main-episodes-lower` cli arg to the script) where experience is gathered and added to the warmup memory, but the network weights are not trained (making this phase very quick). This is followed by about 30 or so episodes of populating the main memory (again with no training taking place) and so it is only after ~230 episodes that the network starts learning and the losses can be plotted.
 
 Unlike the default cartpole problem, where the agent receives one unit of reward per frame that it survives without being terminated, we use the modified reward scheme discussed above, and so plot the reward earned separately:
 ![Rewards](./media/cartpolev1/rewards.png)
