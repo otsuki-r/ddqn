@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import pathlib
 import random
-from typing import NoReturn
 
 import gymnasium
 import torch
@@ -18,7 +17,7 @@ def run(
     env: gymnasium.Env,
     weights_dir: pathlib.Path,
     save_path: pathlib.Path | None = None,
-) -> NoReturn:
+) -> None:
     """
     Run the model in the environment `env` using random seeds at each
     iteration. Opens a new window at the start of each iteration and
@@ -56,11 +55,11 @@ def run(
 
         completed = False
         this_duration = 0
-        this_frames: list[np.NDArray] = []
+        this_frames: list[np.ndarray] = []
 
         while not completed:
             if save_path:
-                this_frames.append(env.render())
+                this_frames.append(env.render())  # type:ignore
             action = ddqn.pnet(state).max(0).indices.item()
             next_state, _, terminated, truncated, _ = env.step(action)
             state = torch.tensor(next_state)
@@ -72,7 +71,8 @@ def run(
         if save_path:
             # Only run one iteration if saving
             save_frames_as_gif(this_frames, save_path)
-            break
+            return
 
         iteration += 1
         time.sleep(1)
+    return
