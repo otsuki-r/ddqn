@@ -4,11 +4,7 @@ from dataclasses import dataclass
 import torch
 import torch.optim as optim
 from gymnasium.envs.registration import Env
-from .action_selection import (
-    ActionSelector,
-    make_epsilon_greedy,
-    make_epsilon_greedy_with_bloom_filter,
-)
+from .action_selection import ActionSelector
 from .early_stop import EarlyReturnFn
 
 
@@ -87,12 +83,6 @@ parser.add_argument(
     default="./out",
 )
 parser.add_argument(
-    "--use-bloom",
-    help="Whether to use a Bloom filter for action selection during training.",
-    type=bool,
-    action=argparse.BooleanOptionalAction,
-)
-parser.add_argument(
     "--eval",
     help="Runs the model specified in --outdir and renders the run",
     type=bool,
@@ -114,7 +104,6 @@ parser.add_argument(
 
 @dataclass
 class TrainingConfig:
-    action_selector: ActionSelector
     epsilon_start: float
     epsilon_end: float
     epsilon_decay: float
@@ -123,6 +112,7 @@ class TrainingConfig:
     gamma: float
     optimiser: optim.Optimizer
     tau: float
+    action_selector_fn: ActionSelector
     loss_fn: torch.nn.modules.loss._Loss
     device: torch.device
     early_return_fn: EarlyReturnFn | None
@@ -175,58 +165,3 @@ def process_cli_args() -> argparse.Namespace:
         raise ValueError("Update rate must lie in range [0, 1]")
 
     return cli_args
-
-
-def build_training_config(
-    cli_args: argparse.Namespace,
-    env_config: EnvConfig,
-    *,
-    optimiser: optim.Optimizer,
-    loss_fn: torch.nn.modules.loss._Loss,
-    early_return_fn: EarlyReturnFn | None = None,
-) -> TrainingConfig:
-    """
-    Collate CLI args and environment configurations into a training
-    configuration.
-
-    Parameters
-    ----------
-    cli_args : argparse.Namespace
-        Args parsed from the command line.
-    env_config : EnvConfig
-        Configuration of the environment to train in.
-    optimiser : optim.Optimizer
-        Optimizer to use.
-    loss : torch.nn.modules.loss._Loss,
-        Loss function to use,
-    early_return_fn : EarlyReturnFn | None, optional
-        Condition to return early from training.
-
-    Returns
-    -------
-    TrainingConfig
-        Traning configuration constructed from inputs.
-    """
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if cli_args.use_bloom:
-        action_selector = make_epsilon_greedy_with_bloom_filter(
-            env=env_config.env, device=device
-        )
-    else:
-        action_selector = make_epsilon_greedy(env=env_config.env, device=device)
-
-    return TrainingConfig(
-        action_selector=action_selector,
-        epsilon_start=cli_args.epsilon_start,
-        epsilon_end=cli_args.epsilon_end,
-        epsilon_decay=cli_args.epsilon_decay,
-        num_episodes=cli_args.num_episodes,
-        batch_size=cli_args.batch_size,
-        gamma=cli_args.gamma,
-        optimiser=optimiser,
-        tau=cli_args.tau,
-        loss_fn=loss_fn,
-        device=device,
-        early_return_fn=early_return_fn,
-    )

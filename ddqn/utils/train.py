@@ -78,7 +78,7 @@ def train(
                 training_config.epsilon_start - training_config.epsilon_end
             ) * math.exp(-global_step_number * training_config.epsilon_decay)
 
-            action = training_config.action_selector(
+            action = training_config.action_selector_fn(
                 this_epsilon, state, ddqn.pnet
             )
 

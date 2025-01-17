@@ -44,19 +44,19 @@ to the reward awarded by the environment ($x$ is the x-position of the cart). Th
 A model can be trained from scratch with or without a Bloom filter by passing the flag `--use-bloom`:
 
 ```bash
-python ./scripts/cartpole_v1.py
+python ./scripts/cartpole_v1/cartpole_v1.py
 ```
 
 or
 
 ```bash
-python ./scripts/cartpole_v1.py --use-bloom
+python ./scripts/cartpole_v1/cartpole_v1.py --use-bloom
 ```
 
 The resulting model can then be evaluated with
 
 ```bash
-python ./scripts/cartpole_v1.py --eval
+python ./scripts/cartpole_v1/cartpole_v1.py --eval
 ```
 
 ### Results
