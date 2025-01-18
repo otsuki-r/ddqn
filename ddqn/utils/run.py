@@ -1,23 +1,18 @@
 import time
 import logging
 import numpy as np
-import pathlib
 import random
 
-import gymnasium
 import torch
+from ddqn.configure import EnvConfig, RunConfig
+
 from ..structures import DoubleDQN
 from .gif import save_frames_as_gif
 
 logger = logging.getLogger(__name__)
 
 
-def run(
-    ddqn: DoubleDQN,
-    env: gymnasium.Env,
-    weights_dir: pathlib.Path,
-    save_path: pathlib.Path | None = None,
-) -> None:
+def run(ddqn: DoubleDQN, env_config: EnvConfig, run_config: RunConfig) -> None:
     """
     Run the model in the environment `env` using random seeds at each
     iteration. Opens a new window at the start of each iteration and
@@ -27,17 +22,16 @@ def run(
     ----------
     ddqn : DoubleDQN
         Double DQN instance
-    env : gymnasium.Env
-        Environment to run the model in. Render mode should be set
-        to human to visualise the output.
-    weights_dir : pathlib.Pathlib
-        Path to directory holding weights
-    save_path : pathlib.Path | None, optional
-        If provided then saves the run to a GIF.
+    env_config : EnvConfig
+        Enironemtn configuration
+    run_config : RunConfig
+        Configuration of how to run the model
     """
 
-    logger.debug("Evaluating model at %s", weights_dir)
-    ddqn.load_state_dict(weights_dir)
+    env = env_config.env
+
+    logger.debug("Evaluating model at %s", str(run_config.weights_dir))
+    ddqn.load_state_dict(run_config.weights_dir)
     ddqn.eval()
 
     iteration = 0
@@ -58,7 +52,7 @@ def run(
         this_frames: list[np.ndarray] = []
 
         while not completed:
-            if save_path:
+            if run_config.save_path:
                 this_frames.append(env.render())  # type:ignore
             action = ddqn.pnet(state).max(0).indices.item()
             next_state, _, terminated, truncated, _ = env.step(action)
@@ -68,9 +62,9 @@ def run(
 
         logger.debug("This episode duration: %s", this_duration)
 
-        if save_path:
+        if run_config.save_path:
             # Only run one iteration if saving
-            save_frames_as_gif(this_frames, save_path)
+            save_frames_as_gif(this_frames, run_config.save_path)
             return
 
         iteration += 1

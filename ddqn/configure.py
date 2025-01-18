@@ -1,4 +1,5 @@
 import argparse
+import pathlib
 from dataclasses import dataclass
 
 import torch
@@ -116,6 +117,13 @@ class TrainingConfig:
     loss_fn: torch.nn.modules.loss._Loss
     device: torch.device
     early_return_fn: EarlyReturnFn | None
+    outdir: pathlib.Path
+
+
+@dataclass
+class RunConfig:
+    weights_dir: pathlib.Path
+    save_path: pathlib.Path | None = None
 
 
 @dataclass

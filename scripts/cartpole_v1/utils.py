@@ -1,6 +1,8 @@
 import argparse
 import functools
 import hashlib
+import logging
+import pathlib
 import random
 from typing import Generic, Generator, TypeVar
 from collections.abc import Hashable
@@ -15,7 +17,7 @@ from gymnasium.envs.registration import Env
 from ddqn.structures import DoubleDQN
 from ddqn.early_stop import winsorised_durations_early_return
 from ddqn.action_selection import ActionSelector, make_epsilon_greedy
-from ddqn.configure import TrainingConfig, parser
+from ddqn.configure import RunConfig, TrainingConfig, parser
 
 T = TypeVar("T", bound=Hashable)
 
@@ -275,7 +277,7 @@ def build_training_config(
     else:
         action_selector = make_epsilon_greedy(env=env_config.env, device=device)
 
-    return TrainingConfig(
+    tc = TrainingConfig(
         epsilon_start=cli_args.epsilon_start,
         epsilon_end=cli_args.epsilon_end,
         epsilon_decay=cli_args.epsilon_decay,
@@ -292,4 +294,33 @@ def build_training_config(
         early_return_fn=winsorised_durations_early_return(
             last_n=20, clip_lower=5, clip_upper=0, score_threshold=470.0
         ),
+        outdir=pathlib.Path(cli_args.outdir),
     )
+
+    logging.info("Training with config: %s", tc)
+
+    return tc
+
+
+def build_run_config(cli_args: argparse.Namespace) -> RunConfig:
+    """
+    Helper function to build run configurations
+
+    Parameters
+    ----------
+    cli_args : argparse.Namespace
+        Arguments parsed from the command line.
+
+    Returns
+    -------
+    RunConfig
+        Configuration required for running the model.
+    """
+
+    outdir = pathlib.Path(cli_args.outdir)
+    save_path = pathlib.Path(cli_args.save_path) if cli_args.save else None
+    rc = RunConfig(weights_dir=outdir, save_path=save_path)
+
+    logging.info("Running with config: %s", rc)
+
+    return rc

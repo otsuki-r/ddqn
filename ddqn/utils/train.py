@@ -1,7 +1,6 @@
 import itertools
 import logging
 import math
-import pathlib
 import time
 
 import enlighten  # type: ignore
@@ -27,7 +26,6 @@ def train(
     *,
     env_config: EnvConfig,
     training_config: TrainingConfig,
-    outdir: pathlib.Path,
 ) -> None:
     """
     Main training loop. Trains `ddqn` in the environment set up in
@@ -42,9 +40,11 @@ def train(
         RL environment configuration.
     training_config :
         Training configuration.
-    outdir : pathlib.Path
-        Directory to save results to
     """
+
+    # Ensure output dir exists
+    outdir = training_config.outdir
+    outdir.mkdir(parents=True, exist_ok=True)
 
     pbar = progress_manager.counter(
         total=training_config.num_episodes,
