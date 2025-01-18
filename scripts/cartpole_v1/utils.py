@@ -17,7 +17,7 @@ from gymnasium.envs.registration import Env
 from ddqn.structures import DoubleDQN
 from ddqn.early_stop import winsorised_durations_early_return
 from ddqn.action_selection import ActionSelector, make_epsilon_greedy
-from ddqn.configure import RunConfig, TrainingConfig, parser
+from ddqn.configure import RunConfig, TrainingConfig, get_render_mode, parser
 
 T = TypeVar("T", bound=Hashable)
 
@@ -226,15 +226,22 @@ def make_epsilon_greedy_with_bloom_filter(
     return inner
 
 
-def make_env_config(cli_args: argparse.Namespace) -> EnvConfig:
-    render_mode: str | None
-    if cli_args.eval:
-        render_mode = "human"
-    elif cli_args.save:
-        render_mode = "rgb_array"
-    else:
-        render_mode = None
+def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:
+    """
+    Helper function to construct environment configurations from CLI args
 
+    Paramaters
+    ----------
+    cli_args: argparse.Namespace
+        Arguments parsed from the CLI
+
+    Return
+    ------
+    EnvConfig
+        Environment configuration built form CLI args.
+    """
+
+    render_mode = get_render_mode(cli_args)
     cart_pole = CenteredCartPole(render_mode=render_mode)
     initial_state, _ = cart_pole.env.reset(seed=42)
 
@@ -318,8 +325,8 @@ def build_run_config(cli_args: argparse.Namespace) -> RunConfig:
     """
 
     outdir = pathlib.Path(cli_args.outdir)
-    save_path = pathlib.Path(cli_args.save_path) if cli_args.save else None
-    rc = RunConfig(weights_dir=outdir, save_path=save_path)
+    spath = pathlib.Path(cli_args.save_path) if cli_args.save_path else None
+    rc = RunConfig(weights_dir=outdir, save_path=spath)
 
     logging.info("Running with config: %s", rc)
 

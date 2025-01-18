@@ -90,16 +90,10 @@ parser.add_argument(
     action=argparse.BooleanOptionalAction,
 )
 parser.add_argument(
-    "--save",
-    help="Runs the model specified in --outdir and saves a gif of the run",
-    type=bool,
-    action=argparse.BooleanOptionalAction,
-)
-parser.add_argument(
     "--save-path",
-    help="Path to save the resulting GIF if --save is passed.",
+    help="If supplied with the --eval flag set, will save a GIF of a run to the supplied path",  # type:ignore
     type=str,
-    default="./out/run.gif",
+    default=None,
 )
 
 
@@ -173,3 +167,31 @@ def process_cli_args() -> argparse.Namespace:
         raise ValueError("Update rate must lie in range [0, 1]")
 
     return cli_args
+
+
+def get_render_mode(cli_args: argparse.Namespace) -> str | None:
+    """
+    Computes the render mode from the parsed CLI args.
+
+    Parameters
+    ----------
+    cli_args : argparse.Namespace
+        Arguments parsed from the CLI.
+
+    Return
+    ------
+    str | None
+        The appropriate render mode parsed from the cli config.
+    """
+
+    render_mode: str | None
+    if cli_args.eval:
+        if cli_args.save_path:
+            render_mode = "rgb_array"
+        else:
+            render_mode = "human"
+    else:
+        # For training
+        render_mode = None
+
+    return render_mode
