@@ -41,6 +41,15 @@ to the reward awarded by the environment ($x$ is the x-position of the cart). Th
 
 ### Usage
 
+The provided package `ddqn` can be installed directly (venv strongly recommended):
+
+```bash
+$ cd ddqn
+$ python3 -m venv my_env
+$ source my_env/bin/activate
+(my_env)$ pip install .
+```
+
 A model can be trained from scratch with or without a Bloom filter by passing the flag `--use-bloom`:
 
 ```bash
@@ -57,6 +66,12 @@ The resulting model can then be evaluated with
 
 ```bash
 python ./scripts/cartpole_v1/cartpole_v1.py --eval
+```
+
+The output of one run can be saved as a GIF by further passing a `--save-path` argument:
+
+```bash
+python ./scripts/cartpole_v1/cartpole_v1.py --eval --save-path="out/cartpole.gif"
 ```
 
 ### Results
