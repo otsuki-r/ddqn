@@ -17,11 +17,16 @@ from gymnasium.envs.registration import Env
 from ddqn.structures import DoubleDQN
 from ddqn.early_stop import winsorised_durations_early_return
 from ddqn.action_selection import ActionSelector, make_epsilon_greedy
-from ddqn.configure import RunConfig, TrainingConfig, get_render_mode, parser
+from ddqn.configure import (
+    RunConfig,
+    TrainingConfig,
+    ddqn_parser,
+    get_render_mode,
+)
 
 T = TypeVar("T", bound=Hashable)
 
-parser.add_argument(
+ddqn_parser.add_argument(
     "--use-bloom",
     help="Whether to use a Bloom filter for action selection during training.",
     type=bool,

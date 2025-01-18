@@ -9,87 +9,87 @@ from .action_selection import ActionSelector
 from .early_stop import EarlyReturnFn
 
 
-parser = argparse.ArgumentParser("bloom_cart_pole")
+ddqn_parser = argparse.ArgumentParser("ddqn")
 
-parser.add_argument(
+ddqn_parser.add_argument(
     "--memory-size",
     help="Max size of the replay memory buffer.",
     type=int,
     default=10_000,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--warmup-episodes-upper",
     help="Number of episodes to append to warmup memory for",
     type=int,
     default=60,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--main-episodes-lower",
     help="Number of episodes to wait before starting to append to main memory",
     type=int,
     default=200,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--epsilon-start",
     help="Start value for ε used in epsilon-greedy action selection.",
     type=float,
     default=0.90,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--epsilon-end",
     help="End value for ε used in epsilon-greedy action selection.",
     type=float,
     default=0.05,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--epsilon-decay",
     help="Exponential decay rate of ε used in epsilon-greedy action selection.",
     type=float,
     default=1e-4,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--num-episodes",
     help="Number of episodes to train for.",
     type=int,
     default=600,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--batch-size",
     help="Batch size to be used in training.",
     type=int,
     default=128,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--gamma",
     help="Discounting power γ of past actions in computing reward",
     type=float,
     default=0.95,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--alpha",
     help="Learing rate α of the optimiser to be used in training.",
     type=float,
     default=1e-3,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--tau",
     help="Update rate τ of target network (soft update).",
     type=float,
     default=1e-2,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--outdir",
     help="Directory to save results to. Will be created if it does not exist.",
     type=str,
     default="./out",
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--eval",
     help="Runs the model specified in --outdir and renders the run",
     type=bool,
     action=argparse.BooleanOptionalAction,
 )
-parser.add_argument(
+ddqn_parser.add_argument(
     "--save-path",
     help="If supplied with the --eval flag set, will save a GIF of a run to the supplied path",  # type:ignore
     type=str,
@@ -127,9 +127,14 @@ class EnvConfig:
     state_space_size: int
 
 
-def process_cli_args() -> argparse.Namespace:
+def process_cli_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     """
     Parse and validate arguments from the CLI
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Argument parser to process.
 
     Returns
     -------

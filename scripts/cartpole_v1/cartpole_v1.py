@@ -6,7 +6,12 @@ from ddqn.configure import process_cli_args
 from ddqn.structures import DoubleDQN, DoubleReplayMemory, StateChange
 from ddqn.utils import run, train
 
-from utils import build_env_config, build_run_config, build_training_config
+from utils import (
+    build_env_config,
+    build_run_config,
+    build_training_config,
+    ddqn_parser,
+)
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
@@ -14,7 +19,7 @@ logging.getLogger("ddqn").setLevel(logging.DEBUG)
 
 
 if __name__ == "__main__":
-    cli_args = process_cli_args()
+    cli_args = process_cli_args(ddqn_parser)
     env_config = build_env_config(cli_args)
 
     replay_memory = DoubleReplayMemory[StateChange](
