@@ -70,7 +70,9 @@ def train(
 
         _state, _ = env_config.env.reset()
         state = training_config.state_space_adaptor(
-            _state, dtype=training_config.state_space_dtype
+            _state,
+            device=training_config.device,
+            dtype=training_config.state_space_dtype,
         ).unsqueeze(0)
 
         for step_number in itertools.count():
@@ -97,7 +99,9 @@ def train(
                 next_state = None
             else:
                 next_state = training_config.state_space_adaptor(
-                    _next_state, dtype=training_config.state_space_dtype
+                    _next_state,
+                    device=training_config.device,
+                    dtype=training_config.state_space_dtype,
                 ).unsqueeze(0)
 
             exp = StateChange(

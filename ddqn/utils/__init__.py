@@ -7,7 +7,6 @@ from .plot import (
     plot_rewards,
 )
 from .train import train
-from .wrangle import torch_from_array
 
 __all__ = [
     "plot_episode_durations",
@@ -16,6 +15,5 @@ __all__ = [
     "plot_rewards",
     "run",
     "save_frames_as_gif",
-    "torch_from_array",
     "train",
 ]
