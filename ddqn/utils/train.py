@@ -69,8 +69,8 @@ def train(
         this_episode_reward: float = 0.0
 
         _state, _ = env_config.env.reset()
-        state = torch.tensor(
-            _state, dtype=torch.float32, device=training_config.device
+        state = training_config.state_space_adaptor(
+            _state, dtype=training_config.state_space_dtype
         ).unsqueeze(0)
 
         for step_number in itertools.count():
@@ -96,10 +96,8 @@ def train(
             if completed:
                 next_state = None
             else:
-                next_state = torch.tensor(
-                    _next_state,
-                    dtype=torch.float32,
-                    device=training_config.device,
+                next_state = training_config.state_space_adaptor(
+                    _next_state, dtype=training_config.state_space_dtype
                 ).unsqueeze(0)
 
             exp = StateChange(
