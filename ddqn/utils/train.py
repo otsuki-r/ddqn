@@ -73,7 +73,7 @@ def train(
             _state,
             device=training_config.device,
             dtype=training_config.state_space_dtype,
-        ).unsqueeze(0)
+        )
 
         for step_number in itertools.count():
             this_epsilon = training_config.epsilon_end + (
@@ -90,7 +90,7 @@ def train(
             this_episode_reward += _reward  # type:ignore
 
             reward = torch.tensor(
-                [[_reward]], dtype=torch.float32, device=training_config.device
+                [_reward], dtype=torch.float32, device=training_config.device
             )
 
             completed = terminated or truncated
@@ -102,7 +102,7 @@ def train(
                     _next_state,
                     device=training_config.device,
                     dtype=training_config.state_space_dtype,
-                ).unsqueeze(0)
+                )
 
             exp = StateChange(
                 state=state,
@@ -245,9 +245,11 @@ def _optimize_one_step(
 
     this_batch = StateChanges(sample_state_changes)
 
-    state_batch = torch.cat(this_batch.states)  # (batch_size, dim(state_space))
-    action_batch = torch.cat(this_batch.actions)  # (batch_size, 1)
-    reward_batch = torch.cat(this_batch.rewards)  # (batch_size, 1)
+    state_batch = torch.stack(
+        this_batch.states
+    )  # (batch_size, dim(state_space))
+    action_batch = torch.stack(this_batch.actions)  # (batch_size, 1)
+    reward_batch = torch.stack(this_batch.rewards)  # (batch_size, 1)
 
     # Compute predictions $Q^{\text{policy}}(s_t, a_t)$.
     predicted_state_action_values = (
@@ -259,20 +261,20 @@ def _optimize_one_step(
     # Any experiences with `next_state = None` were terminated and so
     # automatically have a value of zero.
     target_next_state_values = torch.zeros(
-        batch_size, device=device
+        batch_size, device=device, dtype=torch.float32
     )  # (batch_size,)
     non_final_mask = torch.tensor(
         list(map(lambda s: s is not None, this_batch.next_states)),
         dtype=torch.bool,
         device=device,
     )  # (batch_size,)
-    non_final_next_states = torch.cat(
+    non_final_next_states = torch.stack(
         [s for s in this_batch.next_states if s is not None]
     )  # (VAR, dim(state_space))
     with torch.no_grad():
         target_next_state_values[non_final_mask] = (
             ddqn.tnet(non_final_next_states).max(1).values
-        )
+        )  # (batch_size,)
     target_state_action_values = (
         reward_batch.squeeze(1) + gamma * target_next_state_values
     )  # (batch_size,)

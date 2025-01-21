@@ -51,10 +51,10 @@ def make_epsilon_greedy(
 
         if random.random() > this_epsilon:
             with torch.no_grad():
-                return pnet(state).max(1).indices.view(1, 1)
+                return pnet(state).argmax().unsqueeze(0)
 
         next_choice = env.action_space.sample()
 
-        return torch.tensor([[next_choice]], device=device)
+        return torch.tensor([next_choice], device=device)
 
     return inner
