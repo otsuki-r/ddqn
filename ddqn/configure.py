@@ -1,5 +1,6 @@
 import argparse
 import pathlib
+from typing import Callable
 from dataclasses import dataclass
 
 import torch
@@ -7,6 +8,7 @@ import torch.optim as optim
 from gymnasium.envs.registration import Env
 from .action_selection import ActionSelector
 from .early_stop import EarlyReturnFn
+from .utils import torch_from_array
 
 
 ddqn_parser = argparse.ArgumentParser("ddqn")
@@ -110,8 +112,10 @@ class TrainingConfig:
     action_selector_fn: ActionSelector
     loss_fn: torch.nn.modules.loss._Loss
     device: torch.device
-    early_return_fn: EarlyReturnFn | None
+    early_return_fn: EarlyReturnFn | None = None
     outdir: pathlib.Path
+    state_space_adaptor: Callable[[...], torch.Tensor] = torch_from_array
+    state_space_dtype: torch.dtype = torch.float32
 
 
 @dataclass
