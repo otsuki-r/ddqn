@@ -7,9 +7,9 @@ import random
 import torch
 from ddqn.configure import EnvConfig, RunConfig
 
-from ..structures import DoubleDQN
 from .gif import save_frames_as_gif
-from ..adaptors import make_torch_from_int
+from ..configure import DEVICE
+from ..structures import DoubleDQN
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,8 @@ def run(
 
         _state, _ = env.reset(seed=this_seed)
         state = env_config.state_space_adaptor(
-            _state, dtype=torch.float32, device=torch.device("cpu")
+            _state, dtype=env_config.state_space_dtype, device=DEVICE
         )
-        # state = torch.tensor(_state, dtype=torch.float32)
         logger.debug(
             "Scene: %s, seed: %s, initial_state: %s",
             iteration,
@@ -70,11 +69,13 @@ def run(
         while not completed:
             if run_config.save_path:
                 this_frames.append(env.render())  # type:ignore
+
             with torch.no_grad():
                 action = ddqn.pnet(state).max(0).indices.item()
+
             _next_state, reward, terminated, truncated, _ = env.step(action)
             state = env_config.state_space_adaptor(
-                _next_state, dtype=torch.float32, device=torch.device("cpu")
+                _next_state, dtype=env_config.state_space_dtype, device=DEVICE
             )
             completed = terminated or truncated
             this_duration += 1
