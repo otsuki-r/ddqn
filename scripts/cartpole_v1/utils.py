@@ -7,12 +7,11 @@ import random
 from typing import Generic, Generator, TypeVar
 from collections.abc import Hashable
 
-from ddqn.configure import EnvConfig
+from ddqn.configure import DEVICE, EnvConfig
 import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from gymnasium.envs.registration import Env
 
 from ddqn.structures import DoubleDQN
 from ddqn.early_stop import winsorised_durations_early_return
@@ -149,9 +148,7 @@ class BloomFilter(Generic[T]):
 
 
 def make_epsilon_greedy_with_bloom_filter(
-    *,
-    device: torch.device,
-    env: Env,
+    env_config: EnvConfig,
 ) -> ActionSelector:
     """
     Helper function to create an ε-greedy action selection function
@@ -159,10 +156,8 @@ def make_epsilon_greedy_with_bloom_filter(
 
     Parameters
     ----------
-    env : Env
-        Environment with an action space that is to be sampled from.
-    device : torch.device
-        Device on which to place torch tensors.
+    env_config : EnvConfig
+        Environment config with an action space that is to be sampled.
     """
 
     bloom_filter = BloomFilter[tuple[torch.Tensor, int]](10_000)
@@ -216,17 +211,19 @@ def make_epsilon_greedy_with_bloom_filter(
             with torch.no_grad():
                 return pnet(state).max(1).indices.view(1, 1)
 
-        next_choice = env.action_space.sample()
+        next_choice = env_config.env.action_space.sample()
         v1 = (state.round(decimals=2), next_choice)
         if bloom_filter.contains(v1):
             # Resample
-            next_choice = env.action_space.sample()
+            next_choice = env_config.env.action_space.sample()
             v2 = (state.round(decimals=2), next_choice)
             bloom_filter.insert(v2)
         else:
             bloom_filter.insert(v1)
 
-        return torch.tensor([[next_choice]], device=device)
+        return torch.tensor(
+            [[next_choice]], dtype=env_config.state_space_dtype, device=DEVICE
+        )
 
     return inner
 
@@ -281,13 +278,10 @@ def build_training_config(
         Traning configuration constructed from inputs.
     """
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if cli_args.use_bloom:
-        action_selector = make_epsilon_greedy_with_bloom_filter(
-            env=env_config.env, device=device
-        )
+        action_selector = make_epsilon_greedy_with_bloom_filter(env=env_config)
     else:
-        action_selector = make_epsilon_greedy(env=env_config.env, device=device)
+        action_selector = make_epsilon_greedy(env=env_config)
 
     tc = TrainingConfig(
         epsilon_start=cli_args.epsilon_start,
@@ -302,7 +296,6 @@ def build_training_config(
         tau=cli_args.tau,
         action_selector_fn=action_selector,
         loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
-        device=device,
         early_return_fn=winsorised_durations_early_return(
             last_n=20, clip_lower=5, clip_upper=0, score_threshold=470.0
         ),

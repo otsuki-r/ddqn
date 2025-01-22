@@ -3,25 +3,19 @@ from typing import Callable
 
 import torch
 import torch.nn as nn
-from gymnasium import Env
+from ..configure import DEVICE, EnvConfig
 
 ActionSelector = Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
 
 
-def make_epsilon_greedy(
-    *,
-    env: Env,
-    device: torch.device,
-) -> ActionSelector:
+def make_epsilon_greedy(env_config: EnvConfig) -> ActionSelector:
     """
     Helper function to create an ε-greedy action selection function.
 
     Parameters
     ----------
-    env : Env
-        Environment with an action space that is to be sampled from.
-    device : torch.device
-        Device on which to place torch tensors.
+    env_config : EnvConfig
+        Environment config with an action space that is to be sampled.
     """
 
     def inner(
@@ -53,8 +47,10 @@ def make_epsilon_greedy(
             with torch.no_grad():
                 return pnet(state).argmax().unsqueeze(0)
 
-        next_choice = env.action_space.sample()
+        next_choice = env_config.env.action_space.sample()
 
-        return torch.tensor([next_choice], device=device)
+        return torch.tensor(
+            [next_choice], dtype=env_config.state_space_dtype, device=DEVICE
+        )
 
     return inner

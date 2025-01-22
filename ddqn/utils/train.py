@@ -13,7 +13,7 @@ from .plot import (
     plot_losses,
     plot_rewards,
 )
-from ..configure import EnvConfig, TrainingConfig
+from ..configure import DEVICE, EnvConfig, TrainingConfig
 from ..structures.dqn import DoubleDQN
 from ..structures.replay_memory import StateChange, StateChanges
 
@@ -52,7 +52,7 @@ def train(
         unit="episodes",
         color="green",
     )
-    ddqn = ddqn.to(env_config.device)
+    ddqn = ddqn.to(DEVICE)
 
     state: torch.Tensor
     next_state: None | torch.Tensor
@@ -71,7 +71,6 @@ def train(
         _state, _ = env_config.env.reset()
         state = env_config.state_space_adaptor(
             _state,
-            device=env_config.device,
             dtype=env_config.state_space_dtype,
         )
 
@@ -89,9 +88,7 @@ def train(
             )
             this_episode_reward += _reward  # type:ignore
 
-            reward = torch.tensor(
-                [_reward], dtype=torch.float32, device=env_config.device
-            )
+            reward = torch.tensor([_reward], dtype=torch.float32, device=DEVICE)
 
             completed = terminated or truncated
 
@@ -100,7 +97,6 @@ def train(
             else:
                 next_state = env_config.state_space_adaptor(
                     _next_state,
-                    device=env_config.device,
                     dtype=env_config.state_space_dtype,
                 )
 
@@ -124,7 +120,6 @@ def train(
                 gamma=training_config.gamma,
                 loss_fn=training_config.loss_fn,
                 optimizer=training_config.optimiser,
-                device=env_config.device,
             )
 
             # Update the *target network* by one step
@@ -175,7 +170,6 @@ def _optimize_one_step(
     gamma: float,
     loss_fn: torch.nn.modules.loss._Loss,
     optimizer: optim.Optimizer,
-    device: torch.device,
 ) -> float | None:
     r"""
     Optimize the policy network based on experience sampled from the
@@ -227,8 +221,6 @@ def _optimize_one_step(
         Loss function to train with.
     optimizer : optim.Optimizer
         Optimiser to train with.
-    device : torch.device,
-        Device to train with.
 
     Returns
     -------
@@ -261,12 +253,12 @@ def _optimize_one_step(
     # Any experiences with `next_state = None` were terminated and so
     # automatically have a value of zero.
     target_next_state_values = torch.zeros(
-        batch_size, device=device, dtype=torch.float32
+        batch_size, dtype=torch.float32, device=DEVICE
     )  # (batch_size,)
     non_final_mask = torch.tensor(
         list(map(lambda s: s is not None, this_batch.next_states)),
         dtype=torch.bool,
-        device=device,
+        device=DEVICE,
     )  # (batch_size,)
     non_final_next_states = torch.stack(
         [s for s in this_batch.next_states if s is not None]
