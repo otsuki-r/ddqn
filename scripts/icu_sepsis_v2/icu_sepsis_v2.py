@@ -6,7 +6,7 @@ import sys
 
 from ddqn.configure import ddqn_parser, process_cli_args
 from ddqn.structures import DoubleDQN, DoubleReplayMemory, StateChange
-from ddqn.utils import run, train
+from ddqn.utils import train
 
 from utils import (
     build_env_config,
