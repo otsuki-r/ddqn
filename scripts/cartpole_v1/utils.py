@@ -12,6 +12,7 @@ import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from gymnasium import Env
 
 from ddqn.structures import DoubleDQN
 from ddqn.early_stop import winsorised_durations_early_return
@@ -148,7 +149,10 @@ class BloomFilter(Generic[T]):
 
 
 def make_epsilon_greedy_with_bloom_filter(
-    env_config: EnvConfig,
+    env: Env,
+    *,
+    dtype: torch.dtype,
+    device: torch.device,
 ) -> ActionSelector:
     """
     Helper function to create an ε-greedy action selection function
@@ -156,8 +160,17 @@ def make_epsilon_greedy_with_bloom_filter(
 
     Parameters
     ----------
-    env_config : EnvConfig
-        Environment config with an action space that is to be sampled.
+    env : Env
+        Environment with an action space that is to be sampled from.
+    dtype : torch.dtype
+        Dtype of tensors to create.
+    device : torch.device
+        Device to move tensors to.
+
+    Returns
+    -------
+    ActionSelector
+        Function that selects the next action.
     """
 
     bloom_filter = BloomFilter[tuple[torch.Tensor, int]](10_000)
@@ -211,19 +224,17 @@ def make_epsilon_greedy_with_bloom_filter(
             with torch.no_grad():
                 return pnet(state).max(1).indices.view(1, 1)
 
-        next_choice = env_config.env.action_space.sample()
+        next_choice = env.action_space.sample()
         v1 = (state.round(decimals=2), next_choice)
         if bloom_filter.contains(v1):
             # Resample
-            next_choice = env_config.env.action_space.sample()
+            next_choice = env.action_space.sample()
             v2 = (state.round(decimals=2), next_choice)
             bloom_filter.insert(v2)
         else:
             bloom_filter.insert(v1)
 
-        return torch.tensor(
-            [[next_choice]], dtype=env_config.state_space_dtype, device=DEVICE
-        )
+        return torch.tensor([[next_choice]], dtype=dtype, device=device)
 
     return inner
 
@@ -279,9 +290,13 @@ def build_training_config(
     """
 
     if cli_args.use_bloom:
-        action_selector = make_epsilon_greedy_with_bloom_filter(env=env_config)
+        action_selector = make_epsilon_greedy_with_bloom_filter(
+            env_config.env, dtype=env_config.state_space_dtype, device=DEVICE
+        )
     else:
-        action_selector = make_epsilon_greedy(env=env_config)
+        action_selector = make_epsilon_greedy(
+            env_config.env, dtype=env_config.state_space_dtype, device=DEVICE
+        )
 
     tc = TrainingConfig(
         epsilon_start=cli_args.epsilon_start,
