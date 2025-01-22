@@ -111,7 +111,6 @@ class TrainingConfig:
     tau: float
     action_selector_fn: ActionSelector
     loss_fn: torch.nn.modules.loss._Loss
-    device: torch.device
     early_return_fn: EarlyReturnFn | None
     outdir: pathlib.Path
 
@@ -130,6 +129,7 @@ class EnvConfig:
     state_space_size: int
     state_space_adaptor: Callable[[...], torch.Tensor] = torch_from_array
     state_space_dtype: torch.dtype = torch.float32
+    device: torch.device
 
 
 def process_cli_args(parser: argparse.ArgumentParser) -> argparse.Namespace:

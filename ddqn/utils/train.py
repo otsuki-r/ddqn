@@ -52,7 +52,7 @@ def train(
         unit="episodes",
         color="green",
     )
-    ddqn = ddqn.to(training_config.device)
+    ddqn = ddqn.to(env_config.device)
 
     state: torch.Tensor
     next_state: None | torch.Tensor
@@ -71,7 +71,7 @@ def train(
         _state, _ = env_config.env.reset()
         state = env_config.state_space_adaptor(
             _state,
-            device=training_config.device,
+            device=env_config.device,
             dtype=env_config.state_space_dtype,
         )
 
@@ -90,7 +90,7 @@ def train(
             this_episode_reward += _reward  # type:ignore
 
             reward = torch.tensor(
-                [_reward], dtype=torch.float32, device=training_config.device
+                [_reward], dtype=torch.float32, device=env_config.device
             )
 
             completed = terminated or truncated
@@ -100,7 +100,7 @@ def train(
             else:
                 next_state = env_config.state_space_adaptor(
                     _next_state,
-                    device=training_config.device,
+                    device=env_config.device,
                     dtype=env_config.state_space_dtype,
                 )
 
@@ -124,7 +124,7 @@ def train(
                 gamma=training_config.gamma,
                 loss_fn=training_config.loss_fn,
                 optimizer=training_config.optimiser,
-                device=training_config.device,
+                device=env_config.device,
             )
 
             # Update the *target network* by one step
