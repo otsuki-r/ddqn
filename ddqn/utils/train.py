@@ -69,10 +69,10 @@ def train(
         this_episode_reward: float = 0.0
 
         _state, _ = env_config.env.reset()
-        state = training_config.state_space_adaptor(
+        state = env_config.state_space_adaptor(
             _state,
             device=training_config.device,
-            dtype=training_config.state_space_dtype,
+            dtype=env_config.state_space_dtype,
         )
 
         for step_number in itertools.count():
@@ -98,10 +98,10 @@ def train(
             if completed:
                 next_state = None
             else:
-                next_state = training_config.state_space_adaptor(
+                next_state = env_config.state_space_adaptor(
                     _next_state,
                     device=training_config.device,
-                    dtype=training_config.state_space_dtype,
+                    dtype=env_config.state_space_dtype,
                 )
 
             exp = StateChange(

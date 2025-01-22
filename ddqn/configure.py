@@ -114,8 +114,6 @@ class TrainingConfig:
     device: torch.device
     early_return_fn: EarlyReturnFn | None
     outdir: pathlib.Path
-    state_space_adaptor: Callable[[...], torch.Tensor] = torch_from_array
-    state_space_dtype: torch.dtype = torch.float32
 
 
 @dataclass
@@ -129,6 +127,8 @@ class EnvConfig:
     env: Env
     action_space_size: int
     state_space_size: int
+    state_space_adaptor: Callable[[...], torch.Tensor] = torch_from_array
+    state_space_dtype: torch.dtype = torch.float32
 
 
 def process_cli_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
