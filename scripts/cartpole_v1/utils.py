@@ -291,11 +291,11 @@ def build_training_config(
 
     if cli_args.use_bloom:
         action_selector = make_epsilon_greedy_with_bloom_filter(
-            env_config.env, dtype=env_config.state_space_dtype, device=DEVICE
+            env_config.env, dtype=env_config.action_space_dtype, device=DEVICE
         )
     else:
         action_selector = make_epsilon_greedy(
-            env_config.env, dtype=env_config.state_space_dtype, device=DEVICE
+            env_config.env, dtype=env_config.action_space_dtype, device=DEVICE
         )
 
     tc = TrainingConfig(

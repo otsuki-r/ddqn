@@ -72,6 +72,7 @@ def train(
         state = env_config.state_space_adaptor(
             _state,
             dtype=env_config.state_space_dtype,
+            device=DEVICE,
         )
 
         for step_number in itertools.count():
@@ -98,6 +99,7 @@ def train(
                 next_state = env_config.state_space_adaptor(
                     _next_state,
                     dtype=env_config.state_space_dtype,
+                    device=DEVICE,
                 )
 
             exp = StateChange(
