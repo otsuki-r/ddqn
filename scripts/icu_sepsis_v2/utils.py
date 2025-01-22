@@ -10,7 +10,7 @@ import torch.nn as nn
 from ddqn.action_selection import make_epsilon_greedy
 from ddqn.adaptors import make_torch_from_int
 from ddqn.structures import DoubleDQN
-from ddqn.configure import EnvConfig, RunConfig, TrainingConfig
+from ddqn.configure import DEVICE, EnvConfig, RunConfig, TrainingConfig
 from ddqn.utils import run
 
 
@@ -32,8 +32,6 @@ def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:
 def build_training_config(
     ddqn: DoubleDQN, cli_args: argparse.Namespace, env_config: EnvConfig
 ) -> TrainingConfig:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     return TrainingConfig(
         epsilon_start=cli_args.epsilon_start,
         epsilon_end=cli_args.epsilon_end,
@@ -46,10 +44,9 @@ def build_training_config(
         ),
         tau=cli_args.tau,
         action_selector_fn=make_epsilon_greedy(
-            device=device, env=env_config.env
+            env_config.env, dtype=env_config.action_space_dtype, device=DEVICE
         ),
         loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
-        device=device,
         early_return_fn=None,
         outdir=pathlib.Path(cli_args.outdir),
     )
