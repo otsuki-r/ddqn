@@ -19,10 +19,13 @@ def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:
         # "Sepsis/ICU-Sepsis-v2", inadmissible_action_strategy="terminate"
         "Sepsis/ICU-Sepsis-v2"
     )
+    state_space_size = 716
     return EnvConfig(
         env=env,
         action_space_size=25,
-        state_space_size=716,
+        state_space_size=state_space_size,
+        state_space_adaptor=make_torch_from_int(state_space_size),
+        state_space_dtype=torch.float32,
     )
 
 
@@ -49,8 +52,6 @@ def build_training_config(
         device=device,
         early_return_fn=None,
         outdir=pathlib.Path(cli_args.outdir),
-        state_space_adaptor=make_torch_from_int(env_config.state_space_size),
-        state_space_dtype=torch.float32,
     )
 
 
