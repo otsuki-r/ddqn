@@ -120,6 +120,7 @@ class TrainingConfig:
 class RunConfig:
     weights_dir: pathlib.Path
     save_path: pathlib.Path | None = None
+    num_iterations: int | None = None
 
 
 @dataclass
