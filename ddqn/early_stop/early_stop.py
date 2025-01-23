@@ -7,11 +7,33 @@ T = TypeVar("T")
 
 
 class EarlyStop(Protocol, Generic[T]):
-    """Protocol for evaluating whether to return early or not"""
+    """Protocol for evaluating an early return from training or not"""
 
-    def update(self, episode_reward: T) -> None: ...
+    def update(self, episode_reward: T) -> None:
+        """
+        Update the internal state of this early condition.
 
-    def evaluate(self, episode_num: int) -> bool: ...
+        Paramaters
+        ----------
+        episode_reward : T
+            Reward of the last episode.
+        """
+
+    def evaluate(self, episode_num: int) -> bool:
+        """
+        Evaluates whether this episode should terminate the training
+        early or not.
+
+        Paramaters
+        ----------
+        episode_num : int
+            The episode number being evaluated.
+
+        Returns
+        --------
+        bool
+            Whether the early return condition has been met or not.
+        """
 
 
 class NullEarlyStop(Generic[T]):
@@ -33,10 +55,16 @@ class WinsorisedRewards(Generic[T]):
         score_threshold: float,
     ) -> None:
         """
+        Early stopping condition based on the asymmetric winsorised
+        mean of the last `num_samples`.
+
         Parameters
         ----------
-        last_n : int
+        num_samples : int
             Number of latest episodes to consider.
+        eval_frequency : int
+            Frequency (in episodes) to evaluate the early return
+            condition.
         clip_lower : int
             Number of smallest values to ignore.
         clip_upper : int
@@ -57,8 +85,9 @@ class WinsorisedRewards(Generic[T]):
         cls, vals: list[float], *, clip_lower: int = 0, clip_upper: int = 0
     ) -> float:
         """
-        Asymmetric winsorised mean that computes the mean after discarding
-        the `clip_lower` smallest values and `clip_upper` highest values.
+        Asymmetric winsorised mean that computes the mean after
+        discarding the `clip_lower` smallest values and `clip_upper`
+        highest values.
 
         Parameters
         ----------
@@ -69,6 +98,7 @@ class WinsorisedRewards(Generic[T]):
         clip_upper : int, optional
             Number of largest values to remove before computing mean.
         """
+
         if len(vals) <= clip_lower + clip_upper:
             raise ValueError(
                 "Too few values to winsorize (clip_lower, clip_upper)=(%s, %s))",
@@ -84,13 +114,6 @@ class WinsorisedRewards(Generic[T]):
         self.register.append(episode_reward)
 
     def evaluate(self, episode_num: int) -> bool:
-        """
-        Returns
-        --------
-        EarlyReturnFn
-            Function that computes whether to return early from training
-            based on the outputs of the last few episodes.
-        """
         if episode_num % self.eval_frequency != 0:
             return False
 
