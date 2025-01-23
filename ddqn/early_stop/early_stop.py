@@ -2,30 +2,32 @@ import logging
 from collections import deque
 from typing import Generic, Protocol, TypeVar
 
-from ..structures import StateChange
-
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
 class EarlyStop(Protocol, Generic[T]):
+    """Protocol for evaluating whether to return early or not"""
+
     def update(self, episode_reward: T) -> None: ...
 
-    def evaluate(self) -> bool: ...
+    def evaluate(self, episode_num: int) -> bool: ...
 
 
 class NullEarlyStop(Generic[T]):
     def update(self, episode_reward: T) -> None:
         return
 
-    def evaluate(self) -> bool:
+    def evaluate(self, episode_num: int) -> bool:
         return False
 
 
 class WinsorisedRewards(Generic[T]):
     def __init__(
         self,
+        *,
         num_samples: int,
+        eval_frequency: int,
         clip_lower: int,
         clip_upper: int,
         score_threshold: float,
@@ -44,6 +46,7 @@ class WinsorisedRewards(Generic[T]):
         """
 
         self.num_samples = num_samples
+        self.eval_frequency = eval_frequency
         self.clip_lower = clip_lower
         self.clip_upper = clip_upper
         self.score_threshold = score_threshold
@@ -80,7 +83,7 @@ class WinsorisedRewards(Generic[T]):
     def update(self, episode_reward: T) -> None:
         self.register.append(episode_reward)
 
-    def evaluate(self) -> bool:
+    def evaluate(self, episode_num: int) -> bool:
         """
         Returns
         --------
@@ -88,6 +91,9 @@ class WinsorisedRewards(Generic[T]):
             Function that computes whether to return early from training
             based on the outputs of the last few episodes.
         """
+        if episode_num % self.eval_frequency != 0:
+            return False
+
         if len(self.register) < self.num_samples:
             return False
 
@@ -96,8 +102,8 @@ class WinsorisedRewards(Generic[T]):
             clip_lower=self.clip_lower,
             clip_upper=self.clip_upper,
         )
-        if wmean > self.score_threshold:
-            logger.info("Stopping training early.")
-            return True
-        return False
+        logger.debug("Winsorised mean reward: %s", wmean)
+
+        return wmean > self.score_threshold
+
 

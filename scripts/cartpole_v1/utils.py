@@ -311,8 +311,13 @@ def build_training_config(
         tau=cli_args.tau,
         action_selector_fn=action_selector,
         loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
-        early_return_fn=WinsorisedRewards(20, 5, 0, 470.0),
-        early_return_steps=1,
+        early_return_fn=WinsorisedRewards(
+            num_samples=20,
+            eval_frequency=1,
+            clip_lower=5,
+            clip_upper=0,
+            score_threshold=470.0,
+        ),
         outdir=pathlib.Path(cli_args.outdir),
     )
 
