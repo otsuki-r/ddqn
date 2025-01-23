@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 from gymnasium.envs.registration import Env
 from .action_selection import ActionSelector
-from .early_stop import EarlyReturnFn
+from .early_stop import EarlyStop, NullEarlyStop
 from .adaptors import torch_from_array
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -112,8 +112,9 @@ class TrainingConfig:
     tau: float
     action_selector_fn: ActionSelector
     loss_fn: torch.nn.modules.loss._Loss
-    early_return_fn: EarlyReturnFn | None
     outdir: pathlib.Path
+    early_return_fn: EarlyStop = NullEarlyStop
+    early_return_steps: int = 20
 
 
 @dataclass

@@ -15,7 +15,7 @@ import torch.optim as optim
 from gymnasium import Env
 
 from ddqn.structures import DoubleDQN
-from ddqn.early_stop import winsorised_durations_early_return
+from ddqn.early_stop import WinsorisedRewards
 from ddqn.action_selection import ActionSelector, make_epsilon_greedy
 from ddqn.configure import (
     RunConfig,
@@ -311,9 +311,8 @@ def build_training_config(
         tau=cli_args.tau,
         action_selector_fn=action_selector,
         loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
-        early_return_fn=winsorised_durations_early_return(
-            last_n=20, clip_lower=5, clip_upper=0, score_threshold=470.0
-        ),
+        early_return_fn=WinsorisedRewards(20, 5, 0, 470.0),
+        early_return_steps=1,
         outdir=pathlib.Path(cli_args.outdir),
     )
 
