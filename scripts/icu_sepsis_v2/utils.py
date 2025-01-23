@@ -9,6 +9,7 @@ import torch.optim as optim
 import torch.nn as nn
 from ddqn.action_selection import make_epsilon_greedy
 from ddqn.adaptors import make_torch_from_int
+from ddqn.early_stop import RunningReward
 from ddqn.structures import DoubleDQN
 from ddqn.configure import DEVICE, EnvConfig, RunConfig, TrainingConfig
 from ddqn.utils import run
@@ -47,7 +48,12 @@ def build_training_config(
             env_config.env, dtype=env_config.action_space_dtype, device=DEVICE
         ),
         loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
-        early_return_fn=None,
+        early_return_fn=RunningReward(
+            eval_frequency=50,
+            short_sample=100,
+            long_sample=500,
+            tolerance=0.001,
+        ),
         outdir=pathlib.Path(cli_args.outdir),
     )
 
