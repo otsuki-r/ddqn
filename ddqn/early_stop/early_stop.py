@@ -130,3 +130,53 @@ class WinsorisedRewards(Generic[T]):
         return wmean > self.score_threshold
 
 
+class RunningReward(Generic[T]):
+    def __init__(
+        self,
+        *,
+        eval_frequency: int,
+        short_sample: int,
+        long_sample: int,
+        tolerance: float,
+    ) -> None:
+        """
+        Early return condition based on two means--a short range
+        mean (taken over `short_sample` episodes) and a long range
+        mean (taken over `long_sample` episodes).
+
+        If the two match to within `tolerance`, then the training
+        is assumed to have converged.
+        """
+
+        self.eval_frequency = eval_frequency
+        self.short_sample = short_sample
+        self.long_sample = long_sample
+        self.tolerance = tolerance
+        self.short_register = deque([], maxlen=short_sample)
+        self.long_register = deque([], maxlen=long_sample)
+
+    def update(self, episode_reward: T) -> None:
+        self.short_register.append(episode_reward)
+        self.long_register.append(episode_reward)
+
+    def evaluate(self, episode_num: int) -> bool:
+        if episode_num % self.eval_frequency != 0:
+            return False
+
+        if (
+            len(self.short_register) != self.short_sample
+            or len(self.long_register) != self.long_sample
+        ):
+            return False
+
+        short_mean = sum(self.short_register) / self.short_sample
+        long_mean = sum(self.long_register) / self.long_sample
+        deviation = abs(short_mean - long_mean) / max(long_mean, short_mean)
+
+        logger.debug(
+            "(short_mean, long_mean)="
+            f"({short_mean.item():.3f}, {long_mean.item():.3f}), "
+            f"deviation={deviation.item():.3f}",
+        )
+
+        return deviation < self.tolerance
