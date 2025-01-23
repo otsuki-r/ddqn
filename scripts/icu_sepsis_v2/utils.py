@@ -50,8 +50,8 @@ def build_training_config(
         loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
         early_return_fn=RunningReward(
             eval_frequency=50,
-            short_sample=100,
-            long_sample=500,
+            short_sample=1_000,
+            long_sample=10_000,
             tolerance=0.001,
         ),
         outdir=pathlib.Path(cli_args.outdir),
