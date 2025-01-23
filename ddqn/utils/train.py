@@ -149,10 +149,14 @@ def train(
                 state = next_state
         pbar.update()
 
-        if training_config.early_return_fn and training_config.early_return_fn(
-            episode_durations=episode_durations, rewards=rewards, losses=losses
-        ):
-            break
+        # Check if early return has been satisfied
+        if episode_num > ddqn.replay_memory.main_episodes_lower:
+            training_config.early_return_fn.update(this_episode_reward)
+            if (
+                episode_num % training_config.early_return_steps == 0
+                and training_config.early_return_fn.evaluate()
+            ):
+                break
 
     plot_episode_durations(episode_durations, outdir / "episode_durations.png")
     plot_losses(losses, outdir / "losses.png")
