@@ -1,3 +1,8 @@
-from .early_stop import EarlyReturnFn, winsorised_durations_early_return
+from .early_stop import (
+    EarlyStop,
+    NullEarlyStop,
+    RunningReward,
+    WinsorisedRewards,
+)
 
-__all__ = ["EarlyReturnFn", "winsorised_durations_early_return"]
+__all__ = ["EarlyStop", "NullEarlyStop", "RunningReward", "WinsorisedRewards"]
