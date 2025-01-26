@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from collections import deque
 from typing import Generic, Protocol, TypeVar
 
+import numpy as np
 import torch
-import torch.nn as nn
 
 T = TypeVar("T")
 
@@ -135,22 +135,28 @@ class PER:
         self.regularization = regularization
         self.buffer = deque[StateChange](maxlen=capacity)
         self.relative_freqs = deque[float](maxlen=capacity)
+        self.capacity = capacity
+        self.sum_relative_freqs = 0.0
 
     def sample(self, batch_size: int) -> list[StateChange] | None:
         if len(self.buffer) < 4 * batch_size:
             # Pass until we have enough experience to bootstrap from
             return None
 
-        probs = nn.functional.normalize(
-            torch.tensor(self.relative_freqs), dim=0
+        return np.random.choice(
+            self.buffer,
+            size=batch_size,
+            p=[f / self.sum_relative_freqs for f in self.relative_freqs],
+            replace=False,
         )
-        return random.choices(self.buffer, probs, k=batch_size)
 
     def append(self, sample: StateChange) -> None:
         if sample.td_error is None:
             raise RuntimeError("TD errors should be computed for PER")
 
+        if len(self.relative_freqs) == self.capacity:
+            self.sum_relative_freqs -= self.relative_freqs[0]
         self.buffer.append(sample)
-        self.relative_freqs.append(
-            (sample.td_error or 0.0) + self.regularization
-        )
+        this_err = (sample.td_error.item() or 0.0) + self.regularization
+        self.relative_freqs.append(this_err)
+        self.sum_relative_freqs += this_err
