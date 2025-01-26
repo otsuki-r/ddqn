@@ -138,6 +138,7 @@ class RunningReward(Generic[T]):
         short_sample: int,
         long_sample: int,
         tolerance: float,
+        min_mean: float | None = None,
     ) -> None:
         """
         Early return condition based on two means--a short range
@@ -154,6 +155,7 @@ class RunningReward(Generic[T]):
         self.tolerance = tolerance
         self.short_register = deque([], maxlen=short_sample)
         self.long_register = deque([], maxlen=long_sample)
+        self.min_mean = min_mean
 
     def update(self, episode_reward: T) -> None:
         self.short_register.append(episode_reward)
@@ -178,5 +180,8 @@ class RunningReward(Generic[T]):
             f"({short_mean.item():.3f}, {long_mean.item():.3f}), "
             f"deviation={deviation.item():.3f}",
         )
+
+        if self.min_mean is not None and long_mean < self.min_mean:
+            return False
 
         return deviation < self.tolerance

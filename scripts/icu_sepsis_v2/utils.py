@@ -53,6 +53,7 @@ def build_training_config(
             short_sample=1_000,
             long_sample=10_000,
             tolerance=0.001,
+            min_mean=0.875,
         ),
         outdir=pathlib.Path(cli_args.outdir),
     )
