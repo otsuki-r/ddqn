@@ -165,11 +165,12 @@ def train(
         pbar.update()
 
         # Check if early return has been satisfied
-        if episode_num > training_config.warmup_episodes:
-            training_config.early_return_fn.update(this_episode_reward)
-            if training_config.early_return_fn.evaluate(episode_num):
-                logger.info("Early return condition met.")
-                break
+        training_config.early_return_fn.update(this_episode_reward)
+        if episode_num % 50 == 0 and training_config.early_return_fn.evaluate(
+            episode_num
+        ):
+            logger.info("Early return condition met.")
+            break
 
     losses = list(filter(None, losses))
     plot_episode_durations(episode_durations, outdir / "episode_durations.png")
