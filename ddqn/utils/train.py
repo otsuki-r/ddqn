@@ -116,6 +116,7 @@ def train(
             # Optimize the *policy network* by one step
             this_loss = _optimize_one_step(
                 ddqn,
+                replay_buffer=replay_buffer,
                 batch_size=training_config.batch_size,
                 gamma=training_config.gamma,
                 loss_fn=training_config.loss_fn,
@@ -153,7 +154,7 @@ def train(
         pbar.update()
 
         # Check if early return has been satisfied
-        if episode_num > ddqn.replay_memory.main_episodes_lower:
+        if episode_num > replay_buffer.main_episodes_lower:
             training_config.early_return_fn.update(this_episode_reward)
             if training_config.early_return_fn.evaluate(episode_num):
                 logger.info("Early return condition met.")
@@ -173,6 +174,7 @@ def train(
 
 def _optimize_one_step(
     ddqn: DoubleDQN,
+    replay_buffer: ReplayBuffer,
     *,
     batch_size: int,
     gamma: float,
@@ -221,8 +223,10 @@ def _optimize_one_step(
     ----------
     ddqn : DoubleDQN
         Double DQN instance being trained.
+    replay_buffer : ReplayBuffer
+        Replay buffer to sample experiences from.
     batch_size : int
-        Num. experiences to sample from `replay_memory` per step.
+        Num. experiences to sample from `replay_buffer` per step.
     gamma : float
         Discount rate of future rewards.
     loss_fn : torch.nn.modules.loss._Loss,
@@ -233,13 +237,13 @@ def _optimize_one_step(
     Returns
     -------
     float | None
-        Loss of this step if `replay_memory` has sufficient
-        experience to sample from. If `replay_memory` does not have
+        Loss of this step if `replay_buffer` has sufficient
+        experience to sample from. If `replay_buffer` does not have
         sufficient experience to sample from, no optimisation is
         conducted on this step, and `None` is returned.
     """
 
-    sample_state_changes = ddqn.replay_memory.sample(batch_size)
+    sample_state_changes = replay_buffer.sample(batch_size)
     if sample_state_changes is None:
         return None
 
