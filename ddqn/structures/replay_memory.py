@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 from collections import deque
-from typing import Any, Generic, Protocol, TypeVar
+from typing import Generic, Protocol, TypeVar
 
 import torch
 
@@ -37,7 +37,7 @@ class ReplayBuffer(Protocol, Generic[T]):
 
     def sample(self, n_samples: int) -> list[T] | None: ...
 
-    def append(self, sample: T, **kwargs: Any) -> None: ...
+    def append(self, sample: T) -> None: ...
 
 
 class DoubleReplayMemory(Generic[T]):
@@ -121,9 +121,8 @@ class DoubleReplayMemory(Generic[T]):
             self.warmup_memory, num_warmup_samples
         ) + random.sample(self.main_memory, num_main_samples)
 
-    def append(self, sample: T, **kwargs: Any) -> None:
-        episode_num = kwargs["episode_num"]
-        if episode_num < self.warmup_episodes_upper:
+    def append(self, sample: T) -> None:
+        if len(self.warmup_memory) < self.warmup_episodes:
             self.warmup_memory.append(sample)
-        if episode_num > self.main_episodes_lower:
+        else:
             self.main_memory.append(sample)

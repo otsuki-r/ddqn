@@ -25,7 +25,6 @@ if __name__ == "__main__":
     replay_buffer = DoubleReplayMemory[StateChange](
         capacity=cli_args.memory_size,
         warmup_episodes_upper=cli_args.warmup_episodes_upper,
-        main_episodes_lower=cli_args.main_episodes_lower,
         frac_warmup=0.05,
     )
     ddqn = DoubleDQN(

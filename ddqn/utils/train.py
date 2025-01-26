@@ -110,8 +110,7 @@ def train(
                 next_state=next_state,
             )
 
-            # Conditionally append to replay memory
-            replay_buffer.append(exp, episode_num)
+            replay_buffer.append(exp)
 
             # Optimize the *policy network* by one step
             this_loss = _optimize_one_step(
@@ -154,7 +153,7 @@ def train(
         pbar.update()
 
         # Check if early return has been satisfied
-        if episode_num > replay_buffer.main_episodes_lower:
+        if episode_num > replay_buffer.warmup_episodes:
             training_config.early_return_fn.update(this_episode_reward)
             if training_config.early_return_fn.evaluate(episode_num):
                 logger.info("Early return condition met.")

@@ -21,14 +21,8 @@ ddqn_parser.add_argument(
     default=10_000,
 )
 ddqn_parser.add_argument(
-    "--warmup-episodes-upper",
+    "--warmup-episodes",
     help="Number of episodes to append to warmup memory for",
-    type=int,
-    default=60,
-)
-ddqn_parser.add_argument(
-    "--main-episodes-lower",
-    help="Number of episodes to wait before starting to append to main memory",
     type=int,
     default=200,
 )
