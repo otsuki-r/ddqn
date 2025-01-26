@@ -125,7 +125,7 @@ class EnvConfig:
     state_space_size: int
     state_space_adaptor: Callable[[...], torch.Tensor] = torch_from_array
     state_space_dtype: torch.dtype = torch.float32
-    action_space_dtype: torch.dtype = torch.int32
+    action_space_dtype: torch.dtype = torch.int64
 
 
 def process_cli_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
