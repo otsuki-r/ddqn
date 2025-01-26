@@ -6,8 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as fn
 
-from .replay_memory import DoubleReplayMemory
-
 
 class DQNParams(TypedDict):
     n_observations: int
@@ -30,7 +28,6 @@ class DQN(nn.Module):
 class DoubleDQN:
     def __init__(
         self,
-        replay_memory: DoubleReplayMemory,
         **kwargs: Unpack[DQNParams],
     ) -> None:
         """
@@ -38,14 +35,10 @@ class DoubleDQN:
 
         Parameters
         ----------
-        replay_memory: DoubleReplayMemory
-            Replay memory to use to store the target network'scripts
-            experiences in.
         kwargs : Unpack[DQNParams]
             Parameters passed to the two underlying DQN instances.
         """
 
-        self.replay_memory = replay_memory
         self.pnet = DQN(**kwargs)  # policy network for selecting action
         self.tnet = DQN(**kwargs)  # target network for evaluating action
 

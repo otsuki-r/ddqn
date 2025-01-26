@@ -22,14 +22,13 @@ if __name__ == "__main__":
     cli_args = process_cli_args(ddqn_parser)
     env_config = build_env_config(cli_args)
 
-    replay_memory = DoubleReplayMemory[StateChange](
+    replay_buffer = DoubleReplayMemory[StateChange](
         capacity=cli_args.memory_size,
         warmup_episodes_upper=cli_args.warmup_episodes_upper,
         main_episodes_lower=cli_args.main_episodes_lower,
         frac_warmup=0.05,
     )
     ddqn = DoubleDQN(
-        replay_memory=replay_memory,
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,
     )
@@ -39,4 +38,9 @@ if __name__ == "__main__":
         run(ddqn, env_config=env_config, run_config=run_config)
     else:
         training_config = build_training_config(ddqn, cli_args, env_config)
-        train(ddqn, env_config=env_config, training_config=training_config)
+        train(
+            ddqn,
+            replay_buffer,
+            env_config=env_config,
+            training_config=training_config,
+        )
