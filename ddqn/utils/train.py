@@ -282,13 +282,18 @@ def _optimize_one_step(
         dtype=torch.bool,
         device=DEVICE,
     )  # (batch_size,)
-    non_final_next_states = torch.stack(
-        [s for s in this_batch.next_states if s is not None]
-    )  # (VAR, dim(state_space))
-    with torch.no_grad():
-        target_next_state_values[non_final_mask] = (
-            ddqn.tnet(non_final_next_states).max(1).values
-        )  # (batch_size,)
+    _non_final_next_states = [
+        s for s in this_batch.next_states if s is not None
+    ]
+    if _non_final_next_states:
+        non_final_next_states = torch.stack(
+            _non_final_next_states
+        )  # (VAR, dim(state_space))
+        with torch.no_grad():
+            target_next_state_values[non_final_mask] = (
+                ddqn.tnet(non_final_next_states).max(1).values
+            )  # (batch_size,)
+
     target_state_action_values = (
         reward_batch.squeeze(1) + gamma * target_next_state_values
     )  # (batch_size,)
