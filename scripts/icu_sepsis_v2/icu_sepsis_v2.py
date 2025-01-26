@@ -5,7 +5,7 @@ import os
 import sys
 
 from ddqn.configure import ddqn_parser, process_cli_args
-from ddqn.structures import DoubleDQN, DoubleReplayMemory, StateChange
+from ddqn.structures import PER, DoubleDQN
 from ddqn.utils import train
 
 from utils import (
@@ -24,13 +24,9 @@ if __name__ == "__main__":
     cli_args = process_cli_args(ddqn_parser)
     env_config = build_env_config(cli_args)
 
-    replay_memory = DoubleReplayMemory[StateChange](
-        capacity=cli_args.memory_size,
-        warmup_episodes_upper=cli_args.warmup_episodes_upper,
-        main_episodes_lower=cli_args.main_episodes_lower,
-    )
+    replay_buffer = PER(capacity=cli_args.memory_size)
     ddqn = DoubleDQN(
-        replay_memory=replay_memory,
+        replay_memory=replay_buffer,
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,
     )
@@ -40,4 +36,9 @@ if __name__ == "__main__":
         custom_eval(ddqn, env_config=env_config, run_config=run_config)
     else:
         training_config = build_training_config(ddqn, cli_args, env_config)
-        train(ddqn, env_config=env_config, training_config=training_config)
+        train(
+            ddqn,
+            replay_buffer,
+            env_config=env_config,
+            training_config=training_config,
+        )
