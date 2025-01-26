@@ -62,8 +62,7 @@ class DoubleReplayMemory(Generic[T]):
     def __init__(
         self,
         capacity: int,
-        warmup_episodes_upper: int,
-        main_episodes_lower: int,
+        warmup_episodes: int,
         frac_warmup: float = 0.05,
     ) -> None:
         """
@@ -73,19 +72,15 @@ class DoubleReplayMemory(Generic[T]):
         ----------
         capacity : int
             Maximum size of both the warmup memory and main memories.
-        warmup_episodes_upper : int
+        warmup_episodes : int
             Number of episodes after which appending to the warmup
             memory will *stop*.
-        main_episodes_lower : int
-            Number of episodes after which appending to the main
-            memory will *start*.
         frac_warmup : float, optional
             Fraction of samples that should be taken from the warmup
             memory instead of the main memory.
         """
 
-        self.warmup_episodes_upper = warmup_episodes_upper
-        self.main_episodes_lower = main_episodes_lower
+        self.warmup_episodes = warmup_episodes
 
         self.warmup_memory = deque[T]([], maxlen=capacity)
         self.main_memory = deque[T]([], maxlen=capacity)
