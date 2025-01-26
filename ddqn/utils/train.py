@@ -150,18 +150,19 @@ def train(
                     None if this_loss is None else round(this_loss, 8),
                 )
                 episode_durations.append(step_number + 1)
+                losses.append(this_loss)
+                rewards.append(this_episode_reward)
 
                 if episode_num % k == 0:
                     num_samples = min(len(episode_durations), k)
                     mean = sum(episode_durations[-num_samples:]) / num_samples
                     logger.debug(f"Epsiode_duration MA ({k=}): {mean:.3f}")
 
-                losses.append(this_loss)
-                rewards.append(this_episode_reward)
                 break
 
             else:
                 state = next_state
+
         pbar.update()
 
         # Check if early return has been satisfied
