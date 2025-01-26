@@ -243,7 +243,7 @@ def _optimize_one_step(
         conducted on this step, and `None` is returned.
     """
 
-    sample_state_changes = ddqn.replay_memory.sample(batch_size, 0.05)
+    sample_state_changes = ddqn.replay_memory.sample(batch_size)
     if sample_state_changes is None:
         return None
 

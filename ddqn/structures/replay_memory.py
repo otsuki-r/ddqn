@@ -53,6 +53,7 @@ class DoubleReplayMemory(Generic[T]):
         capacity: int,
         warmup_episodes_upper: int,
         main_episodes_lower: int,
+        frac_warmup: float = 0.05,
     ) -> None:
         """
         Initialise replay memory.
@@ -67,6 +68,9 @@ class DoubleReplayMemory(Generic[T]):
         main_episodes_lower : int
             Number of episodes after which appending to the main
             memory will *start*.
+        frac_warmup : float, optional
+            Fraction of samples that should be taken from the warmup
+            memory instead of the main memory.
         """
 
         self.warmup_episodes_upper = warmup_episodes_upper
@@ -74,19 +78,18 @@ class DoubleReplayMemory(Generic[T]):
 
         self.warmup_memory = deque[T]([], maxlen=capacity)
         self.main_memory = deque[T]([], maxlen=capacity)
+        self.frac_warmup = frac_warmup
 
-    def sample(self, batch_size: int, frac: float = 0.05) -> list[T] | None:
+    def sample(self, batch_size: int) -> list[T] | None:
         """
-        Sample from the main memory. If `frac` is not zero, then
-        a proportionate number of samples will be drawn from the
-        warmup memory.
+        Sample from the main memory. If `self.frac_warmup` is not
+        zero, then a proportionate number of samples will be drawn
+        from the warmup memory.
 
         Parameters
         ----------
         batch_size : int
             Total number of objects to sample from memory.
-        frac : float, optional
-            Proportion of samples to take from warmup memory.
 
         Returns
         -------
@@ -95,7 +98,7 @@ class DoubleReplayMemory(Generic[T]):
             memories to sample from. Otherwise, `list[T]` of samples.
         """
 
-        num_warmup_samples = int(batch_size * frac)
+        num_warmup_samples = int(batch_size * self.frac_warmup)
         num_main_samples = batch_size - num_warmup_samples
 
         if len(self.warmup_memory) < num_warmup_samples or len(
