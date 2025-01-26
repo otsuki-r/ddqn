@@ -1,5 +1,6 @@
 from .dqn import DQN, DoubleDQN
 from .replay_memory import (
+    PER,
     DoubleReplayMemory,
     ReplayBuffer,
     StateChange,
@@ -8,6 +9,7 @@ from .replay_memory import (
 
 __all__ = [
     "DQN",
+    "PER",
     "DoubleDQN",
     "DoubleReplayMemory",
     "ReplayBuffer",

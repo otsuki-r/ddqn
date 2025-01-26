@@ -4,6 +4,7 @@ from collections import deque
 from typing import Generic, Protocol, TypeVar
 
 import torch
+import torch.nn as nn
 
 T = TypeVar("T")
 
@@ -122,3 +123,34 @@ class DoubleReplayMemory(Generic[T]):
             self.warmup_memory.append(sample)
         else:
             self.main_memory.append(sample)
+
+
+class PER:
+    """Prioritized Experience Replay"""
+
+    def __init__(self, capacity: int, regularization: float = 1e-6) -> None:
+        if not regularization > 0.0:
+            raise ValueError("PER regularization must be greater than zero")
+
+        self.regularization = regularization
+        self.buffer = deque[StateChange](maxlen=capacity)
+        self.relative_freqs = deque[float](maxlen=capacity)
+
+    def sample(self, batch_size: int) -> list[StateChange] | None:
+        if len(self.buffer) < 4 * batch_size:
+            # Pass until we have enough experience to bootstrap from
+            return None
+
+        probs = nn.functional.normalize(
+            torch.tensor(self.relative_freqs), dim=0
+        )
+        return random.choices(self.buffer, probs, k=batch_size)
+
+    def append(self, sample: StateChange) -> None:
+        if sample.td_error is None:
+            raise RuntimeError("TD errors should be computed for PER")
+
+        self.buffer.append(sample)
+        self.relative_freqs.append(
+            (sample.td_error or 0.0) + self.regularization
+        )

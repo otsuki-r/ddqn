@@ -56,6 +56,7 @@ def build_training_config(
             min_mean=0.875,
         ),
         outdir=pathlib.Path(cli_args.outdir),
+        compute_td_error=True,
     )
 
 
