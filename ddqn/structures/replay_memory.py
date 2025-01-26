@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 from collections import deque
-from typing import Generic, TypeVar
+from typing import Any, Generic, Protocol, TypeVar
 
 import torch
 
@@ -28,6 +28,16 @@ class StateChanges:
         self.actions = [s.action for s in state_changes]
         self.rewards = [s.reward for s in state_changes]
         self.next_states = [s.next_state for s in state_changes]
+
+
+class ReplayBuffer(Protocol, Generic[T]):
+    """
+    Protocol for replay buffers.
+    """
+
+    def sample(self, n_samples: int) -> list[T] | None: ...
+
+    def append(self, sample: T, **kwargs: Any) -> None: ...
 
 
 class DoubleReplayMemory(Generic[T]):
@@ -111,26 +121,9 @@ class DoubleReplayMemory(Generic[T]):
             self.warmup_memory, num_warmup_samples
         ) + random.sample(self.main_memory, num_main_samples)
 
-    def append_warmup(self, sample: T) -> None:
-        """
-        Append to warmup memory.
-
-        Parameters
-        ----------
-        sample : T
-            Object to insert into warmup memory.
-        """
-
-        self.warmup_memory.append(sample)
-
-    def append_main(self, sample: T) -> None:
-        """
-        Append to main memory.
-
-        Paramaters
-        ----------
-        sample : T
-            Object to isnert into main memory.
-        """
-
-        self.main_memory.append(sample)
+    def append(self, sample: T, **kwargs: Any) -> None:
+        episode_num = kwargs["episode_num"]
+        if episode_num < self.warmup_episodes_upper:
+            self.warmup_memory.append(sample)
+        if episode_num > self.main_episodes_lower:
+            self.main_memory.append(sample)

@@ -14,8 +14,7 @@ from .plot import (
     plot_rewards,
 )
 from ..configure import DEVICE, EnvConfig, TrainingConfig
-from ..structures.dqn import DoubleDQN
-from ..structures.replay_memory import StateChange, StateChanges
+from ..structures import DoubleDQN, ReplayBuffer, StateChange, StateChanges
 
 logger = logging.getLogger(__name__)
 progress_manager = enlighten.get_manager()
@@ -23,6 +22,7 @@ progress_manager = enlighten.get_manager()
 
 def train(
     ddqn: DoubleDQN,
+    replay_buffer: ReplayBuffer[StateChange],
     *,
     env_config: EnvConfig,
     training_config: TrainingConfig,
@@ -111,10 +111,7 @@ def train(
             )
 
             # Conditionally append to replay memory
-            if episode_num < ddqn.replay_memory.warmup_episodes_upper:
-                ddqn.replay_memory.append_warmup(exp)
-            if episode_num > ddqn.replay_memory.main_episodes_lower:
-                ddqn.replay_memory.append_main(exp)
+            replay_buffer.append(exp, episode_num)
 
             # Optimize the *policy network* by one step
             this_loss = _optimize_one_step(
@@ -141,11 +138,10 @@ def train(
                 )
                 episode_durations.append(step_number + 1)
 
-                num_samples = min(len(episode_durations), k)
                 if episode_num % k == 0:
-                    logger.debug(
-                        f"Epsiode_duration MA ({k=}): {sum(episode_durations[-num_samples:]) / num_samples:.3f}"
-                    )
+                    num_samples = min(len(episode_durations), k)
+                    mean = sum(episode_durations[-num_samples:]) / num_samples
+                    logger.debug(f"Epsiode_duration MA ({k=}): {mean:.3f}")
 
                 losses.append(this_loss)
                 rewards.append(this_episode_reward)
