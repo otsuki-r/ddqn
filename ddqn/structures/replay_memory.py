@@ -14,6 +14,7 @@ class StateChange:
     action: torch.Tensor  # a_t
     reward: torch.Tensor  # r_{t+1}
     next_state: torch.Tensor | None  # s_{t+1}
+    td_error: torch.Tensor | None
 
 
 @dataclass
