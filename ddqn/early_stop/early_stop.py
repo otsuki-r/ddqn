@@ -155,11 +155,21 @@ class RunningReward(Generic[T]):
         self.tolerance = tolerance
         self.short_register = deque([], maxlen=short_sample)
         self.long_register = deque([], maxlen=long_sample)
+        self.short_total = 0.0
+        self.long_total = 0.0
         self.min_mean = min_mean
 
     def update(self, episode_reward: T) -> None:
+        if len(self.short_register) == self.short_sample:
+            self.short_total -= self.short_register[0]
+
+        if len(self.long_register) == self.long_sample:
+            self.long_total -= self.long_register[0]
+
         self.short_register.append(episode_reward)
         self.long_register.append(episode_reward)
+        self.short_total += episode_reward
+        self.long_total += episode_reward
 
     def evaluate(self, episode_num: int) -> bool:
         if episode_num % self.eval_frequency != 0:
@@ -171,8 +181,8 @@ class RunningReward(Generic[T]):
         ):
             return False
 
-        short_mean = sum(self.short_register) / self.short_sample
-        long_mean = sum(self.long_register) / self.long_sample
+        short_mean = self.short_total / self.short_sample
+        long_mean = self.long_total / self.long_sample
         deviation = abs(short_mean - long_mean) / max(long_mean, short_mean)
 
         logger.debug(
