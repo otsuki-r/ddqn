@@ -90,7 +90,9 @@ def train(
             )
             this_episode_reward += _reward  # type:ignore
 
-            reward = torch.tensor([_reward], dtype=torch.float32, device=DEVICE)
+            reward = torch.tensor(
+                [_reward], dtype=env_config.reward_dtype, device=DEVICE
+            )
 
             completed = terminated or truncated
 
