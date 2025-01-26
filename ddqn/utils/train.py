@@ -65,6 +65,7 @@ def train(
     logger.debug("Starting training...")
     start = time.time()
     global_step_number = 0
+    k = 1_000
     for episode_num in range(1, training_config.num_episodes + 1):
         this_episode_reward: float = 0.0
 
@@ -139,6 +140,13 @@ def train(
                     None if this_loss is None else round(this_loss, 8),
                 )
                 episode_durations.append(step_number + 1)
+
+                num_samples = min(len(episode_durations), k)
+                if episode_num % k == 0:
+                    logger.debug(
+                        f"Epsiode_duration MA ({k=}): {sum(episode_durations[-num_samples:]) / num_samples:.3f}"
+                    )
+
                 losses.append(this_loss)
                 rewards.append(this_episode_reward)
                 break
