@@ -318,6 +318,7 @@ def build_training_config(
             clip_upper=0,
             score_threshold=470.0,
         ),
+        warmup_episodes=cli_args.warmup_episodes,
         outdir=pathlib.Path(cli_args.outdir),
     )
 

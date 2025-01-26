@@ -164,7 +164,7 @@ def train(
         pbar.update()
 
         # Check if early return has been satisfied
-        if episode_num > replay_buffer.warmup_episodes:
+        if episode_num > training_config.warmup_episodes:
             training_config.early_return_fn.update(this_episode_reward)
             if training_config.early_return_fn.evaluate(episode_num):
                 logger.info("Early return condition met.")

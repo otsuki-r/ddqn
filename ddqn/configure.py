@@ -104,6 +104,7 @@ class TrainingConfig:
     gamma: float
     optimiser: optim.Optimizer
     tau: float
+    warmup_episodes: int
     action_selector_fn: ActionSelector
     loss_fn: torch.nn.modules.loss._Loss
     outdir: pathlib.Path
