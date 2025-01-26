@@ -139,8 +139,7 @@ def train(
                     None if this_loss is None else round(this_loss, 8),
                 )
                 episode_durations.append(step_number + 1)
-                if this_loss is not None:
-                    losses.append(this_loss)
+                losses.append(this_loss)
                 rewards.append(this_episode_reward)
                 break
 
@@ -156,6 +155,7 @@ def train(
                 logger.info("Early return condition met.")
                 break
 
+    losses = list(filter(None, losses))
     plot_episode_durations(episode_durations, outdir / "episode_durations.png")
     plot_losses(losses, outdir / "losses.png")
     plot_rewards(rewards, outdir / "rewards.png")
