@@ -159,7 +159,6 @@ def train(
                 break
 
             else:
-                assert next_state is not None
                 state = next_state
         pbar.update()
 
