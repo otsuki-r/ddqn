@@ -11,9 +11,9 @@ ActionSelector = Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
 def make_epsilon_greedy(
     env: Env,
     *,
+    smoothed: bool = False,
     dtype: torch.dtype,
     device: torch.device,
-    smoothed: bool = False,
 ) -> ActionSelector:
     """
     Helper function to create an ε-greedy action selection function.

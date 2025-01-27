@@ -52,7 +52,10 @@ def build_training_config(
         ),
         tau=cli_args.tau,
         action_selector_fn=make_epsilon_greedy(
-            env_config.env, dtype=env_config.action_space_dtype, device=DEVICE
+            env_config.env,
+            smoothed=True,
+            dtype=env_config.action_space_dtype,
+            device=DEVICE,
         ),
         loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
         early_return_fn=RunningReward(
