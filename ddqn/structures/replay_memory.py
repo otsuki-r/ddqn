@@ -146,7 +146,7 @@ class PER:
         return np.random.choice(
             self.buffer,
             size=batch_size,
-            p=[f / self.sum_relative_freqs for f in self.relative_freqs],
+            p=np.array(self.relative_freqs) / self.sum_relative_freqs,
             replace=False,
         )
 
