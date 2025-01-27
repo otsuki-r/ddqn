@@ -151,11 +151,9 @@ class PER:
         )
 
     def append(self, sample: StateChange) -> None:
-        if sample.td_error is None:
-            raise RuntimeError("TD errors should be computed for PER")
-
         if len(self.relative_freqs) == self.capacity:
             self.sum_relative_freqs -= self.relative_freqs[0]
+
         self.buffer.append(sample)
         this_err = (sample.td_error.item() or 0.0) + self.regularization
         self.relative_freqs.append(this_err)
