@@ -88,10 +88,25 @@ def make_epsilon_greedy(
         torch.Tensor
             Choice of action taken, sampled from the environment's
             action space according to the ε-greedy algorithm.
+
+        Notes
+        -----
+        In this smoothed variant, the state-aciton values are taken as
+        relative weights in a probability distribution. This is to
+        smooth out sharp changes to the action selection under small
+        changes to the Q-values.
+
+        In the unsmoothed versions, if the state-action values for
+        3 possible actions are [0.2, 0.6, 0.7] before an update and
+        [0.3, 0.7, 0.6] after an update, there will be a hard change
+        in action seletion from action 3 to action 2. The smooth
+        version translates smooth changes in the Q-value to smooth
+        changes in the action selection.
         """
 
         if random.random() > this_epsilon:
             with torch.no_grad():
+                breakpoint()
                 return torch.tensor(
                     [random.choices(range(len(state)), pnet(state))]
                 )
