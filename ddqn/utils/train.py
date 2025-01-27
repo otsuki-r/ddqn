@@ -66,6 +66,7 @@ def train(
     start = time.time()
     global_step_number = 1
     k = 100
+    eps_delta = training_config.epsilon_start - training_config.epsilon_end
     for episode_num in range(1, training_config.num_episodes + 1):
         this_episode_reward: float = 0.0
 
@@ -77,9 +78,9 @@ def train(
         )
 
         for step_number in itertools.count():
-            this_epsilon = training_config.epsilon_end + (
-                training_config.epsilon_start - training_config.epsilon_end
-            ) * math.exp(-global_step_number * training_config.epsilon_decay)
+            this_epsilon = training_config.epsilon_end + eps_delta * math.exp(
+                -global_step_number * training_config.epsilon_decay
+            )
 
             action = training_config.action_selector_fn(
                 this_epsilon, state, ddqn.pnet
