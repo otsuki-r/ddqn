@@ -108,7 +108,7 @@ def make_epsilon_greedy(
             with torch.no_grad():
                 breakpoint()
                 return torch.tensor(
-                    [random.choices(range(len(state)), pnet(state))]
+                    [random.choices(range(len(state)), pnet(state).softmax(0))]
                 )
 
         next_choice = env.action_space.sample()
