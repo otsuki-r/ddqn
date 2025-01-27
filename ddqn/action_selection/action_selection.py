@@ -9,7 +9,11 @@ ActionSelector = Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
 
 
 def make_epsilon_greedy(
-    env: Env, *, dtype: torch.dtype, device: torch.device
+    env: Env,
+    *,
+    dtype: torch.dtype,
+    device: torch.device,
+    smoothed: bool = False,
 ) -> ActionSelector:
     """
     Helper function to create an ε-greedy action selection function.
@@ -22,6 +26,10 @@ def make_epsilon_greedy(
         Dtype of tensor to create
     device : torch.device
         Device to put tensor on.
+    smoothed : bool, optional
+        Whether to choose the action based on max of state values,
+        or over a distribution of probabilities (when the random
+        action is not chosen).)
     """
 
     def inner(
@@ -57,4 +65,45 @@ def make_epsilon_greedy(
 
         return torch.tensor([next_choice], dtype=dtype, device=device)
 
-    return inner
+    def inner_smoothed(
+        this_epsilon: float,
+        state: torch.Tensor,
+        pnet: nn.Module,
+    ) -> torch.Tensor:
+        """
+        Decision function for choosing which action to take.
+
+        Parameters
+        ----------
+        this_epsilon : float
+            Value of decaying ε parameter to evaluation the action
+            selection at.
+        state : torch.Tensor
+            The current state of the agent.
+        pnet : nn.Module
+            The policy net of the double DQN  being trained.
+
+        Returns
+        -------
+        torch.Tensor
+            Choice of action taken, sampled from the environment's
+            action space according to the ε-greedy algorithm.
+        """
+
+        if random.random() > this_epsilon:
+            with torch.no_grad():
+                return torch.tensor(
+                    [random.choices(range(len(state)), pnet(state))]
+                )
+
+        next_choice = env.action_space.sample()
+
+        return torch.tensor([next_choice], dtype=dtype, device=device)
+
+    # Separate out the function defs entirely so we don't need to
+    # do an extra `if` state inside the bodies to handle the
+    # `smoothed` parameter.
+    if smoothed:
+        return inner_smoothed
+    else:
+        return inner
