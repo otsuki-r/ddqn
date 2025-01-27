@@ -141,9 +141,10 @@ def train(
 
             # Update the *target network* by one step
             _update_one_step(ddqn, tau=training_config.tau)
-            epsilons.append(this_epsilon)
 
+            epsilons.append(this_epsilon)
             global_step_number += 1
+
             if completed:
                 logger.debug(
                     "Episode: %s, duration: %s, reward: %s, ε: %s, loss: %s",
