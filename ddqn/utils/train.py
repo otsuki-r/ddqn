@@ -65,7 +65,7 @@ def train(
     logger.debug("Starting training...")
     start = time.time()
     global_step_number = 1
-    k = 1_000
+    k = 100
     for episode_num in range(1, training_config.num_episodes + 1):
         this_episode_reward: float = 0.0
 
