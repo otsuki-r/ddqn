@@ -11,14 +11,21 @@ from ddqn.action_selection import make_epsilon_greedy
 from ddqn.adaptors import make_torch_from_int
 from ddqn.early_stop import RunningReward
 from ddqn.structures import DoubleDQN
-from ddqn.configure import DEVICE, EnvConfig, RunConfig, TrainingConfig
+from ddqn.configure import (
+    DEVICE,
+    EnvConfig,
+    RunConfig,
+    TrainingConfig,
+    get_render_mode,
+)
 from ddqn.utils import run
 
 
 def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:
     env = gym.make(
         # "Sepsis/ICU-Sepsis-v2", inadmissible_action_strategy="terminate"
-        "Sepsis/ICU-Sepsis-v2"
+        "Sepsis/ICU-Sepsis-v2",
+        render_mode=get_render_mode(cli_args),
     )
     state_space_size = 716
     return EnvConfig(
