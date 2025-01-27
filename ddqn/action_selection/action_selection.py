@@ -14,6 +14,7 @@ def make_epsilon_greedy(
     smoothed: bool = False,
     dtype: torch.dtype,
     device: torch.device,
+    regularisation: float = 1e-6,
 ) -> ActionSelector:
     """
     Helper function to create an ε-greedy action selection function.
@@ -30,6 +31,8 @@ def make_epsilon_greedy(
         Whether to choose the action based on max of state values,
         or over a distribution of probabilities (when the random
         action is not chosen).)
+    regularisation : float, optional
+        Regularisation to prevent zero probabilities in the softmax.
     """
 
     def inner(
@@ -106,9 +109,8 @@ def make_epsilon_greedy(
 
         if random.random() > this_epsilon:
             with torch.no_grad():
-                breakpoint()
-                return torch.tensor(
-                    [random.choices(range(len(state)), pnet(state).softmax(0))]
+                return torch.clamp(pnet(state), regularisation).multinomial(
+                    num_samples=1
                 )
 
         next_choice = env.action_space.sample()

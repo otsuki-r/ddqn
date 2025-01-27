@@ -136,25 +136,19 @@ class PER:
         self.buffer = deque[StateChange](maxlen=capacity)
         self.relative_freqs = deque[float](maxlen=capacity)
         self.capacity = capacity
-        self.sum_relative_freqs = 0.0
 
     def sample(self, batch_size: int) -> list[StateChange] | None:
         if len(self.buffer) < 4 * batch_size:
             # Pass until we have enough experience to bootstrap from
             return None
 
-        return np.random.choice(
-            self.buffer,
-            size=batch_size,
-            p=np.array(self.relative_freqs) / self.sum_relative_freqs,
-            replace=False,
+        indices = torch.tensor(self.relative_freqs).multinomial(
+            num_samples=batch_size, replacement=False
         )
+        return [self.buffer[i] for i in indices]
 
     def append(self, sample: StateChange) -> None:
-        if len(self.relative_freqs) == self.capacity:
-            self.sum_relative_freqs -= self.relative_freqs[0]
-
         self.buffer.append(sample)
-        this_err = (sample.td_error.item() or 0.0) + self.regularization
-        self.relative_freqs.append(this_err)
-        self.sum_relative_freqs += this_err
+        self.relative_freqs.append(
+            (sample.td_error.item() or 0.0) + self.regularization
+        )
