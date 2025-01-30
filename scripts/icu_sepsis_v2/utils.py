@@ -57,7 +57,7 @@ def build_training_config(
             dtype=env_config.action_space_dtype,
             device=DEVICE,
         ),
-        loss_fn=nn.SmoothL1Loss(),  # Generalisation of robust Huber loss
+        loss_fn=nn.MSELoss(),
         early_return_fn=RunningReward(
             eval_frequency=50,
             short_sample=1_000,
@@ -67,7 +67,7 @@ def build_training_config(
         ),
         outdir=pathlib.Path(cli_args.outdir),
         warmup_episodes=cli_args.warmup_episodes,
-        compute_td_error=True,
+        compute_td_error=False,
     )
 
 
