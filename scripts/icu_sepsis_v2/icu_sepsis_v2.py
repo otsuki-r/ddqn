@@ -5,7 +5,7 @@ import os
 import sys
 
 from ddqn.configure import ddqn_parser, process_cli_args
-from ddqn.structures import PER, DoubleDQN
+from ddqn.structures import DoubleDQN, ExperienceReplay
 from ddqn.utils import train
 
 from utils import (
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     cli_args = process_cli_args(ddqn_parser)
     env_config = build_env_config(cli_args)
 
-    replay_buffer = PER(capacity=cli_args.memory_size)
+    replay_buffer = ExperienceReplay(capacity=cli_args.memory_size)
     ddqn = DoubleDQN(
         replay_memory=replay_buffer,
         n_observations=env_config.state_space_size,
