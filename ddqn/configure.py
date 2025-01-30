@@ -109,7 +109,6 @@ class TrainingConfig:
     loss_fn: torch.nn.modules.loss._Loss
     outdir: pathlib.Path
     early_return_fn: EarlyStop = NullEarlyStop
-    compute_td_error: bool = False
 
 
 @dataclass

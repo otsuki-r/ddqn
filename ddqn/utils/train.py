@@ -106,25 +106,11 @@ def train(
                     device=DEVICE,
                 )
 
-            if training_config.compute_td_error:
-                with torch.no_grad():
-                    prediction = ddqn.pnet(state)
-                    target = reward + training_config.gamma * ddqn.tnet(state)
-                    td_error = (
-                        (prediction - target)
-                        .select(0, action)
-                        .abs()
-                        .unsqueeze(0)
-                    )
-            else:
-                td_error = None
-
             exp = StateChange(
                 state=state,
                 action=action,
                 reward=reward,
                 next_state=next_state,
-                td_error=td_error,
             )
 
             replay_buffer.append(exp)

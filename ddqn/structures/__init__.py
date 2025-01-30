@@ -1,6 +1,5 @@
 from .dqn import DQN, DoubleDQN
 from .replay_memory import (
-    PER,
     DoubleReplayMemory,
     ExperienceReplay,
     ReplayBuffer,
@@ -10,7 +9,6 @@ from .replay_memory import (
 
 __all__ = [
     "DQN",
-    "PER",
     "DoubleDQN",
     "ExperienceReplay",
     "DoubleReplayMemory",

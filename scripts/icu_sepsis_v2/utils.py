@@ -67,7 +67,6 @@ def build_training_config(
         ),
         outdir=pathlib.Path(cli_args.outdir),
         warmup_episodes=cli_args.warmup_episodes,
-        compute_td_error=False,
     )
 
 

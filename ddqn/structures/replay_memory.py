@@ -15,7 +15,6 @@ class StateChange:
     action: torch.Tensor  # a_t
     reward: torch.Tensor  # r_{t+1}
     next_state: torch.Tensor | None  # s_{t+1}
-    td_error: torch.Tensor | None
 
 
 @dataclass
@@ -144,33 +143,3 @@ class ExperienceReplay:
 
     def append(self, sample: StateChange) -> None:
         self.buffer.append(sample)
-
-
-class PER:
-    """Prioritized Experience Replay"""
-
-    def __init__(self, capacity: int, regularization: float = 1e-6) -> None:
-        if not regularization > 0.0:
-            raise ValueError("PER regularization must be greater than zero")
-
-        self.regularization = regularization
-        self.buffer = deque[StateChange](maxlen=capacity)
-        self.relative_freqs = deque[float](maxlen=capacity)
-        self.capacity = capacity
-
-    def sample(self, batch_size: int) -> list[StateChange] | None:
-        if len(self.buffer) < 4 * batch_size:
-            # Pass until we have enough experience to bootstrap from
-            return None
-
-        indices = torch.tensor(self.relative_freqs).multinomial(
-            num_samples=batch_size, replacement=False
-        )
-        return [self.buffer[i] for i in indices]
-
-    def append(self, sample: StateChange) -> None:
-        self.buffer.append(sample)
-        self.relative_freqs.append(
-            self.regularization
-            # (sample.td_error.item() or 0.0) + self.regularization
-        )
