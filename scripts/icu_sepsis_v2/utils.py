@@ -52,6 +52,7 @@ def build_training_config(
         ),
         tau=cli_args.tau,
         action_selector_fn=make_epsilon_greedy(
+            ddqn.pnet,
             env_config.env,
             smoothed=True,
             dtype=env_config.action_space_dtype,

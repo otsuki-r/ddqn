@@ -79,9 +79,7 @@ def train(
                 -global_step_number * training_config.epsilon_decay
             )
 
-            action = training_config.action_selector_fn(
-                epsilon, state, ddqn.pnet
-            )
+            action = training_config.action_selector_fn(epsilon, state)
 
             _next_state, _reward, terminated, truncated, _ = (
                 env_config.env.step(action.item())

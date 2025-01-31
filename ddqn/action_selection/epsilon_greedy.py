@@ -30,6 +30,7 @@ ddqn_parser.add_argument(
 
 
 def make_epsilon_greedy(
+    pnet: nn.Module,
     env: Env,
     *,
     smoothed: bool = False,
@@ -56,11 +57,7 @@ def make_epsilon_greedy(
         Regularisation to prevent zero probabilities in the softmax.
     """
 
-    def inner(
-        this_epsilon: float,
-        state: torch.Tensor,
-        pnet: nn.Module,
-    ) -> torch.Tensor:
+    def inner(this_epsilon: float, state: torch.Tensor) -> torch.Tensor:
         """
         Decision function for choosing which action to take.
 
@@ -71,8 +68,6 @@ def make_epsilon_greedy(
             selection at.
         state : torch.Tensor
             The current state of the agent.
-        pnet : nn.Module
-            The policy net of the double DQN  being trained.
 
         Returns
         -------
@@ -90,9 +85,7 @@ def make_epsilon_greedy(
         return torch.tensor([next_choice], dtype=dtype, device=device)
 
     def inner_smoothed(
-        this_epsilon: float,
-        state: torch.Tensor,
-        pnet: nn.Module,
+        this_epsilon: float, state: torch.Tensor
     ) -> torch.Tensor:
         """
         Decision function for choosing which action to take.
@@ -104,8 +97,6 @@ def make_epsilon_greedy(
             selection at.
         state : torch.Tensor
             The current state of the agent.
-        pnet : nn.Module
-            The policy net of the double DQN  being trained.
 
         Returns
         -------
