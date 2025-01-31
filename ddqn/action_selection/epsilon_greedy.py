@@ -1,11 +1,32 @@
 import random
-from typing import Callable
 
 import torch
 import torch.nn as nn
 from gymnasium import Env
 
-ActionSelector = Callable[[float, torch.Tensor, nn.Module], torch.Tensor]
+from . import ActionSelector
+from ..parser import ddqn_parser
+
+
+# Register args
+ddqn_parser.add_argument(
+    "--epsilon-start",
+    help="Start value for ε used in epsilon-greedy action selection.",
+    type=float,
+    default=0.90,
+)
+ddqn_parser.add_argument(
+    "--epsilon-end",
+    help="End value for ε used in epsilon-greedy action selection.",
+    type=float,
+    default=0.05,
+)
+ddqn_parser.add_argument(
+    "--epsilon-decay",
+    help="Exponential decay rate of ε used in epsilon-greedy action selection.",
+    type=float,
+    default=1e-4,
+)
 
 
 def make_epsilon_greedy(

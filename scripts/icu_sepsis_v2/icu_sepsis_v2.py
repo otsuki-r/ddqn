@@ -4,9 +4,10 @@ import logging
 import os
 import sys
 
-from ddqn.configure import ddqn_parser, process_cli_args
+from ddqn.configure import process_cli_args
 from ddqn.ddqn import DoubleDQN
-from ddqn.replay_buffer import ExperienceReplay
+from ddqn.parser import ddqn_parser
+from ddqn.replay_buffer.experience_replay import ExperienceReplay
 from ddqn.utils import train
 from ddqn.watcher import (
     MovingAverageWatcher,
@@ -74,6 +75,7 @@ if __name__ == "__main__":
         custom_eval(ddqn, env_config=env_config, run_config=run_config)
     else:
         training_config = build_training_config(ddqn, cli_args, env_config)
+        breakpoint()
         train(
             ddqn,
             replay_buffer,

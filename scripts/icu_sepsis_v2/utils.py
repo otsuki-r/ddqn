@@ -7,7 +7,7 @@ import gymnasium as gym
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from ddqn.action_selection import make_epsilon_greedy
+from ddqn.action_selection.epsilon_greedy import make_epsilon_greedy
 from ddqn.adaptors import make_torch_from_int
 from ddqn.configure import (
     DEVICE,

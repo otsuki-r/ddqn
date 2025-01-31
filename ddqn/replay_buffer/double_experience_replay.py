@@ -2,7 +2,16 @@ import random
 from collections import deque
 from typing import Generic, TypeVar
 
+from ..parser import ddqn_parser
+
 T = TypeVar("T")
+
+ddqn_parser.add_argument(
+    "--warmup-episodes",
+    help="Number of episodes to append to the warmup buffer for",
+    type=int,
+    default=200,
+)
 
 
 class DoubleExperienceReplay(Generic[T]):
