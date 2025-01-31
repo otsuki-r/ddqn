@@ -1,47 +1,11 @@
 import random
-from dataclasses import dataclass
 from collections import deque
-from typing import Generic, Protocol, TypeVar
-
-import numpy as np
-import torch
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
 
-@dataclass
-class StateChange:
-    state: torch.Tensor  # s_t
-    action: torch.Tensor  # a_t
-    reward: torch.Tensor  # r_{t+1}
-    next_state: torch.Tensor | None  # s_{t+1}
-
-
-@dataclass
-class StateChanges:
-    states: list[torch.Tensor]
-    actions: list[torch.Tensor]
-    rewards: list[torch.Tensor]
-    next_states: list[torch.Tensor | None]
-
-    def __init__(self, state_changes: list[StateChange]) -> None:
-        self.states = [s.state for s in state_changes]
-        self.actions = [s.action for s in state_changes]
-        self.rewards = [s.reward for s in state_changes]
-        self.next_states = [s.next_state for s in state_changes]
-
-
-class ReplayBuffer(Protocol, Generic[T]):
-    """
-    Protocol for replay buffers.
-    """
-
-    def sample(self, n_samples: int) -> list[T] | None: ...
-
-    def append(self, sample: T) -> None: ...
-
-
-class DoubleReplayMemory(Generic[T]):
+class DoubleExperienceReplay(Generic[T]):
     """
     Replay memory to store the target networks' experiences in and
     with which to train the policy network with. We maintain two
@@ -122,24 +86,3 @@ class DoubleReplayMemory(Generic[T]):
             self.warmup_memory.append(sample)
         else:
             self.main_memory.append(sample)
-
-
-class ExperienceReplay:
-    def __init__(self, capacity: int, min_batch_multiple: int = 4) -> None:
-        self.min_batch_multiple = min_batch_multiple
-        self.buffer = deque[StateChange](maxlen=capacity)
-        self.capacity = capacity
-
-    def sample(self, batch_size: int) -> list[StateChange] | None:
-        if len(self.buffer) < self.min_batch_multiple * batch_size:
-            return None
-
-        indices = torch.tensor(
-            np.random.choice(
-                min(len(self.buffer), self.capacity), batch_size, replace=False
-            )
-        )
-        return [self.buffer[i] for i in indices]
-
-    def append(self, sample: StateChange) -> None:
-        self.buffer.append(sample)

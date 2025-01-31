@@ -15,9 +15,9 @@ class DQNParams(TypedDict):
 class DQN(nn.Module):
     def __init__(self, **kwargs: Unpack[DQNParams]) -> None:
         super().__init__()
-        self.l1 = nn.Linear(kwargs["n_observations"], 32)
-        self.l2 = nn.Linear(32, 32)
-        self.l3 = nn.Linear(32, kwargs["n_actions"])
+        self.l1 = nn.Linear(kwargs["n_observations"], 64)
+        self.l2 = nn.Linear(64, 64)
+        self.l3 = nn.Linear(64, kwargs["n_actions"])
 
     def forward(self, x: torch.Tensor) -> None:
         x = fn.relu(self.l1(x))

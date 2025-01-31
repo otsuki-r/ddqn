@@ -9,7 +9,7 @@ from ddqn.configure import EnvConfig, RunConfig
 
 from .gif import save_frames_as_gif
 from ..configure import DEVICE
-from ..structures import DoubleDQN
+from ..ddqn import DoubleDQN
 
 logger = logging.getLogger(__name__)
 

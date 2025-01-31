@@ -9,7 +9,8 @@ import torch.optim as optim
 
 from ..configure import DEVICE, EnvConfig, TrainingConfig
 from ..step_handler import StepHandler, StepSummary
-from ..structures import DoubleDQN, ReplayBuffer, StateChange, StateChanges
+from ..ddqn import DoubleDQN
+from ..replay_buffer import ReplayBuffer, StateChange, StateChanges
 from ..watcher import Watcher
 
 logger = logging.getLogger(__name__)

@@ -18,7 +18,7 @@ from ddqn.configure import (
 )
 from ddqn.early_stop import RunningReward
 from ddqn.utils import run
-from ddqn.structures import DoubleDQN
+from ddqn.ddqn import DoubleDQN
 
 
 def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:

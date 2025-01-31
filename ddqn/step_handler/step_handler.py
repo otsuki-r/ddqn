@@ -8,7 +8,7 @@ import enlighten  # type: ignore
 import torch
 
 from ..early_stop import EarlyStop
-from ..structures import ReplayBuffer, StateChange
+from ..replay_buffer import ReplayBuffer, StateChange
 from ..watcher import Watcher, WatcherTarget, WatcherType
 
 

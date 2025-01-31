@@ -5,7 +5,8 @@ import os
 import sys
 
 from ddqn.configure import ddqn_parser, process_cli_args
-from ddqn.structures import DoubleDQN, ExperienceReplay
+from ddqn.ddqn import DoubleDQN
+from ddqn.replay_buffer import ExperienceReplay
 from ddqn.utils import train
 from ddqn.watcher import (
     MovingAverageWatcher,
@@ -13,6 +14,7 @@ from ddqn.watcher import (
     WatcherTarget,
     WatcherType,
 )
+
 from utils import (
     build_env_config,
     build_run_config,
@@ -29,6 +31,7 @@ if __name__ == "__main__":
     cli_args = process_cli_args(ddqn_parser)
     env_config = build_env_config(cli_args)
 
+    # Configure some logging
     watchers = [
         ValueWatcher(
             target=WatcherTarget.LOSS,
@@ -62,7 +65,6 @@ if __name__ == "__main__":
 
     replay_buffer = ExperienceReplay(capacity=cli_args.memory_size)
     ddqn = DoubleDQN(
-        replay_memory=replay_buffer,
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,
     )
