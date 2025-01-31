@@ -9,8 +9,6 @@ import torch.optim as optim
 import torch.nn as nn
 from ddqn.action_selection import make_epsilon_greedy
 from ddqn.adaptors import make_torch_from_int
-from ddqn.early_stop import RunningReward
-from ddqn.structures import DoubleDQN
 from ddqn.configure import (
     DEVICE,
     EnvConfig,
@@ -18,7 +16,9 @@ from ddqn.configure import (
     TrainingConfig,
     get_render_mode,
 )
+from ddqn.early_stop import RunningReward
 from ddqn.utils import run
+from ddqn.structures import DoubleDQN
 
 
 def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:

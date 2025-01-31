@@ -1,299 +1,18 @@
-import dataclasses
-import enum
 import itertools
 import logging
 import math
-import pathlib
-import signal
-import sys
 import time
-from collections import deque
-from typing import Generic, Protocol, TypeVar
+from collections.abc import Collection
 
-import enlighten  # type: ignore
 import torch
 import torch.optim as optim
 
 from ..configure import DEVICE, EnvConfig, TrainingConfig
-from ..early_stop import EarlyStop
+from ..step_handler import StepHandler, StepSummary
 from ..structures import DoubleDQN, ReplayBuffer, StateChange, StateChanges
+from ..watcher import Watcher
 
 logger = logging.getLogger(__name__)
-progress_manager = enlighten.get_manager()
-T = TypeVar("T")
-
-
-class WatcherTarget(enum.StrEnum):
-    REWARD = enum.auto()
-    LOSS = enum.auto()
-    EPISODE_DURATIONS = enum.auto()
-    EPSILON = enum.auto()
-
-
-class WatcherType(enum.StrEnum):
-    EPISODES = enum.auto()
-    GLOBAL_STEP = enum.auto()
-
-
-class Watcher(Generic[T]):
-    def __init__(
-        self,
-        target: WatcherTarget,
-        watcher_type: str,
-        freq: int = 50,
-    ) -> None:
-        self.target = target
-        self.watcher_type = WatcherType(watcher_type)
-        self.freq = freq
-        self.counter_str = {
-            WatcherType.EPISODES: "Episode",
-            WatcherType.GLOBAL_STEP: "Step",
-        }[self.watcher_type]
-
-    def append(self, val: T, *, counter: int) -> None:
-        if val:
-            val = f"{val:.8f}"
-
-        if counter % self.freq != 0:
-            return
-
-        logger.info(f"{self.counter_str} {counter} {self.target}: {val}")
-        return
-
-
-class MovingAverageWatcher(Generic[T]):
-    def __init__(
-        self,
-        capacity: int,
-        target: WatcherTarget,
-        watcher_type: str,
-        freq: int = 50,
-    ) -> None:
-        self.capacity = capacity
-        self.target = target
-        self.watcher_type = WatcherType(watcher_type)
-        self.freq = freq
-        self.buffer: deque[T] = deque([], maxlen=capacity)
-        self.counter_str = {
-            WatcherType.EPISODES: "Episode",
-            WatcherType.GLOBAL_STEP: "Step",
-        }[self.watcher_type]
-
-    def append(self, val: T, *, counter: int) -> None:
-        self.buffer.append(val)
-
-        if counter % self.freq != 0:
-            return
-
-        mean = sum(self.buffer) / len(self.buffer)
-        logger.info(
-            f"{self.counter_str} {counter} {self.target} MA@{self.capacity}: {mean:.3f}"
-        )
-        return
-
-
-@dataclasses.dataclass
-class StepSummary:
-    state: torch.Tensor
-    action: torch.Tensor
-    reward: torch.Tensor  # step reward
-    next_state: torch.Tensor | None
-    epsilon: float
-    loss: float
-    step_number: int
-    episode_number: int
-    global_step_number: int
-    episode_duration: int | None
-    episode_reward: float | None
-
-
-class EndOfStepHandler(Protocol):
-    def step_end(self, step_summary: StepSummary) -> None: ...
-
-    def episode_end(self, step_summary: StepSummary) -> None: ...
-
-
-class DefaultEndOfStepHandler:
-    def __init__(
-        self,
-        path: pathlib.Path,
-        num_episodes: int,
-        *,
-        buffering_episodes: int = 100,
-        watchers: list[Watcher] | None = None,
-        early_return_fn: EarlyStop | None = None,
-    ) -> None:
-        self.buffering_episodes = buffering_episodes
-        self.path = path
-
-        self.losses_buffer = []
-        self.rewards_buffer = []
-        self.epsilons_buffer = []
-        self.epsiode_durations_buffer = []
-
-        self.buffer_map = {
-            "losses.txt": self.losses_buffer,
-            "rewards.txt": self.rewards_buffer,
-            "epsilons.txt": self.epsilons_buffer,
-            "episode_durations.txt": self.epsiode_durations_buffer,
-        }
-        for fname in self.buffer_map.keys():
-            # Trunacte files
-            (self.path / fname).open("w")
-
-        self.episode_watchers = [
-            w for w in watchers or [] if w.watcher_type is WatcherType.EPISODES
-        ]
-        self.step_watchers = [
-            w
-            for w in watchers or []
-            if w.watcher_type is WatcherType.GLOBAL_STEP
-        ]
-
-        self.pbar = progress_manager.counter(
-            total=num_episodes,
-            desc="Episode num.",
-            unit="episodes",
-            color="green",
-        )
-
-    def step_end(
-        self, step_summary: StepSummary, replay_buffer: ReplayBuffer
-    ) -> None:
-        exp = StateChange(
-            state=step_summary.state,
-            action=step_summary.action,
-            reward=step_summary.reward,
-            next_state=step_summary.next_state,
-        )
-        self.losses_buffer.append(
-            (
-                step_summary.episode_number,
-                step_summary.loss,
-            )
-        )
-        self.rewards_buffer.append(
-            (
-                step_summary.episode_number,
-                step_summary.reward.item(),
-            )
-        )
-        self.epsilons_buffer.append(
-            (
-                step_summary.episode_number,
-                step_summary.epsilon,
-            )
-        )
-
-        replay_buffer.append(exp)
-
-        for w in self.step_watchers:
-            match w.target:
-                case WatcherTarget.LOSS:
-                    w.append(
-                        step_summary.loss,
-                        counter=step_summary.global_step_number,
-                    )
-                case WatcherTarget.REWARD:
-                    w.append(
-                        step_summary.reward,
-                        counter=step_summary.global_step_number,
-                    )
-                case WatcherTarget.EPSILON:
-                    w.append(
-                        step_summary.epsilon,
-                        counter=step_summary.global_step_number,
-                    )
-                case _:
-                    raise ValueError(
-                        "Watcher target %s is unsupported for steps",
-                        w.target,
-                    )
-
-    def episode_end(self, step_summary: StepSummary) -> None:
-        logger.debug(
-            "Episode: %s, duration: %s, reward: %s",
-            step_summary.episode_number,
-            step_summary.step_number,
-            step_summary.reward.item(),
-        )
-
-        self.pbar.update()
-
-        self.epsiode_durations_buffer.append(
-            (
-                step_summary.episode_number,
-                step_summary.episode_duration,
-            )
-        )
-
-        for w in self.episode_watchers:
-            match w.target:
-                case WatcherTarget.EPISODE_DURATIONS:
-                    w.append(
-                        step_summary.episode_duration,
-                        counter=step_summary.episode_number,
-                    )
-                case WatcherTarget.REWARD:
-                    w.append(
-                        step_summary.episode_reward,
-                        counter=step_summary.episode_number,
-                    )
-                case _:
-                    raise ValueError(
-                        "Watcher target %s is unsupported for episodes",
-                        w.target,
-                    )
-
-        if step_summary.episode_number % self.buffering_episodes == 0:
-            self.flush()
-
-        return
-
-    @classmethod
-    def _format_tuple(cls, tup: tuple[int, int | float]) -> str:
-        return str(tup).strip("()").replace(" ", "")
-
-    def flush(self) -> None:
-        with (self.path / "losses.txt").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join([self._format_tuple(t) for t in self.losses_buffer])
-            )
-        with (self.path / "rewards.txt").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join(
-                    [self._format_tuple(t) for t in self.rewards_buffer]
-                )
-            )
-        with (self.path / "epsilons.txt").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join(
-                    [self._format_tuple(t) for t in self.epsilons_buffer]
-                )
-            )
-        with (self.path / "episode_durations.txt").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join(
-                    [
-                        self._format_tuple(t)
-                        for t in self.epsiode_durations_buffer
-                    ]
-                )
-            )
-
-        self.losses_buffer = []
-        self.rewards_buffer = []
-        self.epsilons_buffer = []
-        self.epsiode_durations_buffer = []
-
-    def interrupt_handler(self, sig, frame) -> None:
-        logger.warning("Interrupt called. Flushing buffers to file")
-        self.flush()
-        sys.exit(0)
 
 
 def train(
@@ -302,7 +21,7 @@ def train(
     *,
     env_config: EnvConfig,
     training_config: TrainingConfig,
-    end_of_step_handler: EndOfStepHandler | None = None,
+    watchers: Collection[Watcher] | None = None,
 ) -> None:
     """
     Main training loop. Trains `ddqn` in the environment set up in
@@ -323,45 +42,13 @@ def train(
     outdir = training_config.outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
-    if not end_of_step_handler:
-        end_of_step_handler = DefaultEndOfStepHandler(
-            outdir,
-            num_episodes=training_config.num_episodes,
-            buffering_episodes=10,
-            watchers=[
-                Watcher(
-                    target=WatcherTarget.LOSS,
-                    watcher_type=WatcherType.GLOBAL_STEP,
-                    freq=100,
-                ),
-                Watcher(
-                    target=WatcherTarget.EPSILON,
-                    watcher_type=WatcherType.GLOBAL_STEP,
-                    freq=100,
-                ),
-                MovingAverageWatcher(
-                    capacity=1_000,
-                    target=WatcherTarget.EPISODE_DURATIONS,
-                    watcher_type=WatcherType.EPISODES,
-                    freq=100,
-                ),
-                MovingAverageWatcher(
-                    capacity=1_000,
-                    target=WatcherTarget.REWARD,
-                    watcher_type=WatcherType.EPISODES,
-                    freq=50,
-                ),
-                MovingAverageWatcher(
-                    capacity=10_000,
-                    target=WatcherTarget.REWARD,
-                    watcher_type=WatcherType.EPISODES,
-                    freq=50,
-                ),
-            ],
-            early_return_fn=training_config.early_return_fn,
-        )
-
-    signal.signal(signal.SIGINT, end_of_step_handler.interrupt_handler)
+    step_handler = StepHandler(
+        outdir,
+        num_episodes=training_config.num_episodes,
+        buffering_episodes=10,
+        watchers=watchers or [],
+        early_return_fn=training_config.early_return_fn,
+    )
 
     ddqn = ddqn.to(DEVICE)
 
@@ -446,10 +133,10 @@ def train(
                 episode_reward=this_episode_reward,
             )
 
-            end_of_step_handler.step_end(step_summary, replay_buffer)
+            step_handler.step_end(step_summary, replay_buffer)
 
             if completed:
-                end_of_step_handler.episode_end(step_summary)
+                step_handler.episode_end(step_summary)
                 break
 
             else:
@@ -465,7 +152,7 @@ def train(
             break
 
     # Write out remaining values
-    end_of_step_handler.flush()
+    step_handler.flush()
 
     ddqn.save(outdir)
 
