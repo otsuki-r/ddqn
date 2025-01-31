@@ -15,14 +15,14 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ddqn_parser = argparse.ArgumentParser("ddqn")
 
 ddqn_parser.add_argument(
-    "--memory-size",
-    help="Max size of the replay memory buffer.",
+    "--buffer-size",
+    help="Max size of the experience replay buffer.",
     type=int,
     default=10_000,
 )
 ddqn_parser.add_argument(
     "--warmup-episodes",
-    help="Number of episodes to append to warmup memory for",
+    help="Number of episodes to append to the warmup buffer for",
     type=int,
     default=200,
 )

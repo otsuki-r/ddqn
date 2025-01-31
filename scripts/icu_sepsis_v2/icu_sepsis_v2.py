@@ -63,7 +63,7 @@ if __name__ == "__main__":
         ),
     ]
 
-    replay_buffer = ExperienceReplay(capacity=cli_args.memory_size)
+    replay_buffer = ExperienceReplay(capacity=cli_args.buffer_size)
     ddqn = DoubleDQN(
         n_observations=env_config.state_space_size,
         n_actions=env_config.action_space_size,

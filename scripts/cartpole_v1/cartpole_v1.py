@@ -23,7 +23,7 @@ if __name__ == "__main__":
     env_config = build_env_config(cli_args)
 
     replay_buffer = DoubleReplayMemory[StateChange](
-        capacity=cli_args.memory_size,
+        capacity=cli_args.buffer_size,
         warmup_episodes=cli_args.warmup_episodes,
         frac_warmup=0.05,
     )
