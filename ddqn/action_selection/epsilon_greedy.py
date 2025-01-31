@@ -1,4 +1,6 @@
+import math
 import random
+from typing import Protocol
 
 import torch
 import torch.nn as nn
@@ -27,6 +29,25 @@ ddqn_parser.add_argument(
     type=float,
     default=1e-4,
 )
+
+
+class EpsilonSchedule(Protocol):
+    def __call__(self, global_step_number: int) -> float: ...
+
+
+class ExponentialDecay:
+    def __init__(
+        self, eps_start: float, eps_end: float, eps_decay: float
+    ) -> None:
+        self.epsilon_start = eps_start
+        self.epsilon_end = eps_end
+        self.epsilon_decay = eps_decay
+        self.epsilon_delta = self.epsilon_start - self.epsilon_end
+
+    def __call__(self, global_step_number: int) -> float:
+        return self.epsilon_end + self.epsilon_delta * math.exp(
+            -global_step_number * self.epsilon_decay
+        )
 
 
 def make_epsilon_greedy(

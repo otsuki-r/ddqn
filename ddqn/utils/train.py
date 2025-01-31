@@ -1,12 +1,12 @@
 import itertools
 import logging
-import math
 import time
 from collections.abc import Collection
 
 import torch
 import torch.optim as optim
 
+from ..action_selection.epsilon_greedy import ExponentialDecay
 from ..configure import DEVICE, EnvConfig, TrainingConfig
 from ..step_handler import StepHandler, StepSummary
 from ..ddqn import DoubleDQN
@@ -58,7 +58,12 @@ def train(
     completed: bool
     episode_duration: int | None
     global_step_number = 0
-    eps_delta = training_config.epsilon_start - training_config.epsilon_end
+
+    epsilon_schedule = ExponentialDecay(
+        eps_start=training_config.epsilon_start,
+        eps_end=training_config.epsilon_end,
+        eps_decay=training_config.epsilon_decay,
+    )
 
     logger.debug("Starting training...")
     start = time.time()
@@ -74,10 +79,7 @@ def train(
 
         for step_number in itertools.count(1):
             global_step_number += 1
-
-            epsilon = training_config.epsilon_end + eps_delta * math.exp(
-                -global_step_number * training_config.epsilon_decay
-            )
+            epsilon = epsilon_schedule(global_step_number)
 
             action = training_config.action_selector_fn(epsilon, state)
 
