@@ -67,7 +67,6 @@ def build_training_config(
             min_mean=0.875,
         ),
         outdir=pathlib.Path(cli_args.outdir),
-        warmup_episodes=cli_args.warmup_episodes,
     )
 
 
