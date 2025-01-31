@@ -75,7 +75,6 @@ if __name__ == "__main__":
         custom_eval(ddqn, env_config=env_config, run_config=run_config)
     else:
         training_config = build_training_config(ddqn, cli_args, env_config)
-        breakpoint()
         train(
             ddqn,
             replay_buffer,
