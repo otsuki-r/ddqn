@@ -1,5 +1,3 @@
-"""Quickstart example for the ICU-Sepsis environment."""
-
 import logging
 import os
 import sys
