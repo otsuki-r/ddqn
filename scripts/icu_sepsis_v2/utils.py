@@ -58,7 +58,8 @@ def build_training_config(
             dtype=env_config.action_space_dtype,
             device=DEVICE,
         ),
-        loss_fn=nn.MSELoss(),
+        # loss_fn=nn.MSELoss(),
+        loss_fn=nn.SmoothL1Loss(),
         early_return_fn=RunningReward(
             eval_frequency=50,
             short_sample=1_000,

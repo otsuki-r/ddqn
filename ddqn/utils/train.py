@@ -246,17 +246,17 @@ def _optimize_one_step(
     reward_batch = torch.stack(this_batch.rewards)  # (batch_size, 1)
 
     # Compute predictions $Q^{\text{policy}}(s_t, a_t)$.
-    predicted_state_action_values = (
-        ddqn.pnet(state_batch).gather(1, action_batch).squeeze(1)
-    )  # (batch_size, dim(action_space) -> (batch_size, 1) -> (batch_size,)
+    predicted_state_action_values = ddqn.pnet(state_batch).gather(
+        1, action_batch
+    )  # (batch_size, dim(action_space) -> (batch_size, 1)
 
     # Compute target values
     # $Q^{\text{target}}(s_t, a_t) = r_t + \gamma V^{\text{target}}(s_{t+1})$.
     # Any experiences with `next_state = None` were terminated and so
     # automatically have a value of zero.
     target_next_state_values = torch.zeros(
-        batch_size, dtype=torch.float32, device=DEVICE
-    )  # (batch_size,)
+        (batch_size, 1), dtype=torch.float32, device=DEVICE
+    )  # (batch_size, 1)
     non_final_mask = torch.tensor(
         list(map(lambda s: s is not None, this_batch.next_states)),
         dtype=torch.bool,
@@ -266,17 +266,21 @@ def _optimize_one_step(
         s for s in this_batch.next_states if s is not None
     ]
     if _non_final_next_states:
-        non_final_next_states = torch.stack(
-            _non_final_next_states
-        )  # (VAR, dim(state_space))
         with torch.no_grad():
-            target_next_state_values[non_final_mask] = (
-                ddqn.tnet(non_final_next_states).max(1).values
-            )  # (batch_size,)
+            non_final_next_states = torch.stack(
+                _non_final_next_states
+            )  # (VAR, dim(state_space))
+            argmax_actions = (
+                ddqn.pnet(non_final_next_states).argmax(1)  # (VAR,)
+            )
+            target_next_state_values[non_final_mask] = ddqn.tnet(
+                non_final_next_states
+            ).gather(1, argmax_actions.unsqueeze(1))  # (batch_size,)
 
     target_state_action_values = (
-        reward_batch.squeeze(1) + gamma * target_next_state_values
-    )  # (batch_size,)
+        reward_batch + gamma * target_next_state_values
+    )  # (batch_size, 1)
+    breakpoint()
 
     this_loss = loss_fn(
         predicted_state_action_values, target_state_action_values
