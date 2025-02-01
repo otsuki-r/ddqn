@@ -14,15 +14,19 @@ import torch.nn as nn
 import torch.optim as optim
 from gymnasium import Env
 
-from ddqn.structures import DoubleDQN
-from ddqn.early_stop import WinsorisedRewards
-from ddqn.action_selection import ActionSelector, make_epsilon_greedy
+from ddqn.action_selection.epsilon_greedy import (
+    ActionSelector,
+    make_epsilon_greedy,
+)
 from ddqn.configure import (
     RunConfig,
     TrainingConfig,
-    ddqn_parser,
     get_render_mode,
 )
+from ddqn.ddqn import DoubleDQN
+from ddqn.early_stop import WinsorisedRewards
+from ddqn.parser import ddqn_parser
+
 
 T = TypeVar("T", bound=Hashable)
 
@@ -149,6 +153,7 @@ class BloomFilter(Generic[T]):
 
 
 def make_epsilon_greedy_with_bloom_filter(
+    pnet: nn.Module,
     env: Env,
     *,
     dtype: torch.dtype,
@@ -291,11 +296,17 @@ def build_training_config(
 
     if cli_args.use_bloom:
         action_selector = make_epsilon_greedy_with_bloom_filter(
-            env_config.env, dtype=env_config.action_space_dtype, device=DEVICE
+            ddqn.pnet,
+            env_config.env,
+            dtype=env_config.action_space_dtype,
+            device=DEVICE,
         )
     else:
         action_selector = make_epsilon_greedy(
-            env_config.env, dtype=env_config.action_space_dtype, device=DEVICE
+            ddqn.pnet,
+            env_config.env,
+            dtype=env_config.action_space_dtype,
+            device=DEVICE,
         )
 
     tc = TrainingConfig(
@@ -318,7 +329,6 @@ def build_training_config(
             clip_upper=0,
             score_threshold=470.0,
         ),
-        warmup_episodes=cli_args.warmup_episodes,
         outdir=pathlib.Path(cli_args.outdir),
     )
 
