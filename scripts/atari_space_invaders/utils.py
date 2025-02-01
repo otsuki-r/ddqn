@@ -2,7 +2,7 @@ import argparse
 import logging
 import pathlib
 
-import icu_sepsis  # noqa: F401
+import ale_py  # noqa: F401
 import gymnasium as gym
 import torch
 import torch.optim as optim
@@ -21,18 +21,24 @@ from ddqn.utils import run
 from ddqn.ddqn import DoubleDQN
 
 
+def pad_batch(x: torch.tensor, **kwargs) -> torch.Tensor:
+    # Env outputs (H, W, C). Pad to (N, H, W, C) Add in N=1 to be compatible with batch learning
+    return torch.tensor(x, dtype=kwargs["dtype"], device=kwargs["device"])
+
+
 def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:
     env = gym.make(
-        # "Sepsis/ICU-Sepsis-v2", inadmissible_action_strategy="terminate"
-        "Sepsis/ICU-Sepsis-v2",
+        "ALE/SpaceInvaders-v5",
         render_mode=get_render_mode(cli_args),
+        # render_mode="human",
     )
     state_space_size = 716
     return EnvConfig(
         env=env,
-        action_space_size=25,
-        state_space_size=state_space_size,
-        state_space_adaptor=make_torch_from_int(state_space_size),
+        action_space_size=6,
+        state_space_size=512,
+        state_space_adaptor=pad_batch,
+        # state_space_adaptor=make_torch_from_int(state_space_size),
         state_space_dtype=torch.float32,
     )
 

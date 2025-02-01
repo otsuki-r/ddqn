@@ -23,7 +23,7 @@ from utils import (
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
-logging.getLogger("ddqn").setLevel(logging.INFO)
+logging.getLogger("ddqn").setLevel(logging.DEBUG)
 
 
 if __name__ == "__main__":
