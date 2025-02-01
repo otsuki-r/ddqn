@@ -280,7 +280,6 @@ def _optimize_one_step(
     target_state_action_values = (
         reward_batch + gamma * target_next_state_values
     )  # (batch_size, 1)
-    breakpoint()
 
     this_loss = loss_fn(
         predicted_state_action_values, target_state_action_values
