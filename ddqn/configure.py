@@ -18,6 +18,7 @@ class TrainingConfig:
     epsilon_start: float
     epsilon_end: float
     epsilon_decay: float
+    epsilon_exploration_steps: int = 0
     num_episodes: int
     batch_size: int
     gamma: float
@@ -72,6 +73,9 @@ def process_cli_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
 
     if cli_args.epsilon_end < 0.0 or cli_args.epsilon_end > 1.0:
         raise ValueError("End value of epsilon must lie in range [0, 1]")
+
+    if cli_args.epsilon_exploration_steps < 0:
+        raise ValueError("Number of exploration steps must be poitive")
 
     if cli_args.epsilon_decay < 0.0:
         raise ValueError("Decay rate of epsilon must lie in range [0, 1]")

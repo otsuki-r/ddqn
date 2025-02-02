@@ -37,16 +37,43 @@ class EpsilonSchedule(Protocol):
 
 class ExponentialDecay:
     def __init__(
-        self, eps_start: float, eps_end: float, eps_decay: float
+        self,
+        start: float,
+        end: float,
+        decay: float,
+        exploration_steps: int = 0,
     ) -> None:
-        self.epsilon_start = eps_start
-        self.epsilon_end = eps_end
-        self.epsilon_decay = eps_decay
-        self.epsilon_delta = self.epsilon_start - self.epsilon_end
+        self.epsilon_start = start
+        self.epsilon_end = end
+        self.epsilon_decay = decay
+        self.epsilon_delta = self.start - self.end
+        self.exploration_steps = exploration_steps
 
     def __call__(self, global_step_number: int) -> float:
-        return self.epsilon_end + self.epsilon_delta * math.exp(
-            -global_step_number * self.epsilon_decay
+        r"""
+        Epsilon schedule with a built in exploration phase
+
+        $$
+        \epsilon(t) = H(\epsilon_{\text{exp}} - t)
+            + H(t - \epsilon_{\text{exp}}) \times (
+                \epsilon_f + (\epsilon_{\text{i}} - \epsilon_{\text{f}}) \times e^{- t * \epsilon_{\text{decay}}}
+            )
+        $$
+
+        where
+        * $\epsilon_{\text{exp}}$ is a number of exploration steps
+            for which $\epsilon$ is fixed to 1 (100% exploration)
+        * $\espilon_{\text{i}}$ is the initial $\epsilon$
+        * $\espilon_{\text{f}}$ is the target final $\epsilon$
+        * $\espilon_{\text{decay}}$ is the decay rate of $\epsilon$
+        """
+
+        return torch.heaviside(
+            self.exploration_steps - global_step_number
+        ) + torch.heaviside(global_step_number - self.exploration_steps) * (
+            self.epsilon_end
+            + self.epsilon_delta
+            * math.exp(-global_step_number * self.epsilon_decay)
         )
 
 

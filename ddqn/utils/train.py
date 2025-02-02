@@ -60,9 +60,10 @@ def train(
     global_step_number = 0
 
     epsilon_schedule = ExponentialDecay(
-        eps_start=training_config.epsilon_start,
-        eps_end=training_config.epsilon_end,
-        eps_decay=training_config.epsilon_decay,
+        start=training_config.epsilon_start,
+        end=training_config.epsilon_end,
+        decay=training_config.epsilon_decay,
+        exploration_steps=training_config.epsilon_exploration_steps,
     )
 
     logger.debug("Starting training...")
