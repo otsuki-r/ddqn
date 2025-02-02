@@ -75,13 +75,15 @@ class ExponentialDecay:
         * $\espilon_{\text{decay}}$ is the decay rate of $\epsilon$
         """
 
-        return np.heaviside(
-            self.exploration_steps - global_step_number, 0.5
-        ) + np.heaviside(global_step_number - self.exploration_steps, 0.5) * (
-            self.epsilon_end
-            + self.epsilon_delta
-            * math.exp(-global_step_number * self.epsilon_decay)
-        )
+        return (
+            np.heaviside(self.exploration_steps - global_step_number, 0.5)
+            + np.heaviside(global_step_number - self.exploration_steps, 0.5)
+            * (
+                self.epsilon_end
+                + self.epsilon_delta
+                * math.exp(-global_step_number * self.epsilon_decay)
+            )
+        ).item()
 
 
 def make_epsilon_greedy(

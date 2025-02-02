@@ -7,7 +7,14 @@ import sys
 import enlighten  # type: ignore
 import torch
 
+from ..ddqn import DoubleDQN
 from ..early_stop import EarlyStop
+from ..utils import (
+    plot_episode_durations,
+    plot_episode_rewards,
+    plot_epsilons,
+    plot_losses,
+)
 from ..replay_buffer import ReplayBuffer, StateChange
 from ..watcher import Watcher, WatcherTarget, WatcherType
 
@@ -33,26 +40,30 @@ class StepSummary:
 class StepHandler:
     def __init__(
         self,
-        path: pathlib.Path,
-        num_episodes: int,
         *,
+        path: pathlib.Path,
+        ddqn: DoubleDQN,
+        num_episodes: int,
         buffering_episodes: int = 100,
         watchers: list[Watcher] | None = None,
         early_return_fn: EarlyStop | None = None,
     ) -> None:
-        self.buffering_episodes = buffering_episodes
         self.path = path
+        self.ddqn = ddqn
+        self.buffering_episodes = buffering_episodes
 
         self.losses_buffer = []
         self.rewards_buffer = []
         self.epsilons_buffer = []
-        self.epsiode_durations_buffer = []
+        self.episode_durations_buffer = []
+        self.episode_rewards_buffer = []
 
         self.buffer_map = {
-            "losses.txt": self.losses_buffer,
-            "rewards.txt": self.rewards_buffer,
-            "epsilons.txt": self.epsilons_buffer,
-            "episode_durations.txt": self.epsiode_durations_buffer,
+            "losses.csv": self.losses_buffer,
+            "rewards.csv": self.rewards_buffer,
+            "epsilons.csv": self.epsilons_buffer,
+            "episode_durations.csv": self.episode_durations_buffer,
+            "episode_rewards.csv": self.episode_rewards_buffer,
         }
         for fname in self.buffer_map.keys():
             # Trunacte files
@@ -140,10 +151,16 @@ class StepHandler:
 
         self.pbar.update()
 
-        self.epsiode_durations_buffer.append(
+        self.episode_durations_buffer.append(
             (
                 step_summary.episode_number,
                 step_summary.episode_duration,
+            )
+        )
+        self.episode_rewards_buffer.append(
+            (
+                step_summary.episode_number,
+                step_summary.episode_reward,
             )
         )
 
@@ -170,47 +187,67 @@ class StepHandler:
 
         return
 
+    def train_end(self) -> None:
+        # Write out remaining values and plot
+        self.flush()
+        self.plot()
+        self.ddqn.save(self.path)
+
     @classmethod
     def _format_tuple(cls, tup: tuple[int, int | float]) -> str:
         return str(tup).strip("()").replace(" ", "")
 
     def flush(self) -> None:
-        with (self.path / "losses.txt").open("a") as f:
+        with (self.path / "losses.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join([self._format_tuple(t) for t in self.losses_buffer])
             )
-        with (self.path / "rewards.txt").open("a") as f:
+        with (self.path / "rewards.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join(
                     [self._format_tuple(t) for t in self.rewards_buffer]
                 )
             )
-        with (self.path / "epsilons.txt").open("a") as f:
+        with (self.path / "epsilons.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join(
                     [self._format_tuple(t) for t in self.epsilons_buffer]
                 )
             )
-        with (self.path / "episode_durations.txt").open("a") as f:
+        with (self.path / "episode_durations.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join(
                     [
                         self._format_tuple(t)
-                        for t in self.epsiode_durations_buffer
+                        for t in self.episode_durations_buffer
                     ]
+                )
+            )
+        with (self.path / "episode_rewards.csv").open("a") as f:
+            f.write(
+                "\n"
+                + "\n".join(
+                    [self._format_tuple(t) for t in self.episode_rewards_buffer]
                 )
             )
 
         self.losses_buffer = []
         self.rewards_buffer = []
         self.epsilons_buffer = []
-        self.epsiode_durations_buffer = []
+        self.episode_durations_buffer = []
+        self.episode_rewards_buffer = []
 
-    def interrupt_handler(self, sig, frame) -> None:
-        logger.warning("Interrupt called. Flushing buffers to file")
-        self.flush()
+    def plot(self) -> None:
+        plot_episode_durations(self.path / "episode_durations.csv")
+        plot_episode_rewards(self.path / "episode_rewards.csv")
+        plot_epsilons(self.path / "epsilons.csv")
+        plot_losses(self.path / "losses.csv")
+
+    def interrupt_handler(self, sig: int, frame) -> None:
+        logger.warning("Interrupt called. Writing out...")
+        self.train_end()
         sys.exit(0)

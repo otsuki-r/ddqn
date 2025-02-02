@@ -44,7 +44,8 @@ def train(
     outdir.mkdir(parents=True, exist_ok=True)
 
     step_handler = StepHandler(
-        outdir,
+        path=outdir,
+        ddqn=ddqn,
         num_episodes=training_config.num_episodes,
         buffering_episodes=10,
         watchers=watchers or [],
@@ -153,10 +154,7 @@ def train(
             logger.info("Early return condition met.")
             break
 
-    # Write out remaining values
-    step_handler.flush()
-
-    ddqn.save(outdir)
+    step_handler.train_end(ddqn)
 
     logger.debug("Finished training")
     logger.debug(f"Time taken: {time.time() - start:.3f}s")

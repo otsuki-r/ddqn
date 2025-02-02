@@ -24,6 +24,8 @@ from utils import (
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
 logging.getLogger("ddqn").setLevel(logging.DEBUG)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("PIL").setLevel(logging.WARNING)
 
 
 if __name__ == "__main__":

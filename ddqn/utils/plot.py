@@ -1,82 +1,53 @@
-import dataclasses
 import pathlib
-from typing import TypeVar
 
 import matplotlib.pyplot as plt
-import torch
-
-T = TypeVar("T")
+import numpy as np
 
 
-@dataclasses.dataclass
-class PlotConfig:
-    plot_id: int
-    title: str
-    xlabel: str
-    ylabel: str
+def plot_episode_durations(path: pathlib.Path) -> None:
+    _, data = np.genfromtxt(path, delimiter=",").T
+    plt.figure(0)
+    plt.title("Epsiode Durations")
+    plt.xlabel("Episode number")
+    plt.ylabel("Duration / steps")
+    plt.plot(data)
+    plt.savefig(str(path.with_suffix(".png")))
 
 
-EPISODE_PLOT_CONFIG = PlotConfig(
-    plot_id=1,
-    title="Episode duration",
-    xlabel="Episode number",
-    ylabel="Duration",
-)
-LOSS_PLOT_CONFIG = PlotConfig(
-    plot_id=2,
-    title="Loss",
-    xlabel="Episode number",
-    ylabel="Loss",
-)
-REWARD_PLOT_CONFIG = PlotConfig(
-    plot_id=3,
-    title="Cumulative reward",
-    xlabel="Episode number",
-    ylabel="Reward",
-)
-EPSILON_PLOT_CONFIG = PlotConfig(
-    plot_id=4,
-    title="Epsilon decay",
-    xlabel="Global step number",
-    ylabel="Epsilon",
-)
+def plot_episode_rewards(path: pathlib.Path) -> None:
+    _, data = np.genfromtxt(path, delimiter=",").T
+    plt.figure(1)
+    plt.title("Epsiode Rewards")
+    plt.xlabel("Episode number")
+    plt.ylabel("Reward")
+    plt.plot(data)
+    plt.savefig(str(path.with_suffix(".png")))
 
 
-def _plot(data: list[T], path: pathlib.Path, plot_config: PlotConfig) -> None:
-    """
-    Plot data according to `plot_config`, saving output to `path`.
-
-    Parameters
-    ----------
-    data : list[T]
-        1d data to plot
-    path : pathlib.Path
-        Path to save plot to
-    plot_config : PlotConfig
-        Configuration for plotting the data.
-    """
-
-    plt.figure(plot_config.plot_id)
-    plt.title(plot_config.title)
-    plt.xlabel(plot_config.xlabel)
-    plt.ylabel(plot_config.ylabel)
-    data_t = torch.tensor(data, dtype=torch.float)
-    plt.plot(data_t.numpy())
-    plt.savefig(str(path))
-    return
+def plot_epsilons(path: pathlib.Path) -> None:
+    _, data = np.genfromtxt(path, delimiter=",").T
+    plt.figure(2)
+    plt.title("Epsilon decay")
+    plt.xlabel("Step")
+    plt.ylabel("Epsilon")
+    plt.plot(data)
+    plt.savefig(str(path.with_suffix(".png")))
 
 
-def plot_episode_durations(data: list[int], path: pathlib.Path) -> None:
-    _plot(data, path=path, plot_config=EPISODE_PLOT_CONFIG)
-
-
-def plot_losses(data: list[float], path: pathlib.Path) -> None:
-    _plot(data, path=path, plot_config=LOSS_PLOT_CONFIG)
-
-
-def plot_rewards(data: list[float], path: pathlib.Path) -> None:
-    _plot(data, path=path, plot_config=REWARD_PLOT_CONFIG)
-
-
-def plot_epsilons(data: list[float], path: pathlib.Path) -> None:
-    _plot(data, path=path, plot_config=EPSILON_PLOT_CONFIG)
+def plot_losses(path: pathlib.Path) -> None:
+    data = np.genfromtxt(path, delimiter=",")
+    episode_nums, vals = data.T
+    episode_vals = np.split(
+        data[:, 1], np.unique(data[:, 0], return_index=True)[1][1:]
+    )
+    episode_means = [
+        arr[~np.isnan(arr)].mean() if arr[~np.isnan(arr)].size != 0 else None
+        for arr in episode_vals
+    ]
+    plt.figure(3)
+    plt.title("Mean loss")
+    plt.xlabel("Epsiode number")
+    plt.ylabel("Loss")
+    plt.plot(episode_means)
+    plt.xlim([0, episode_nums.max()])
+    plt.savefig(str(path.with_suffix(".png")))
