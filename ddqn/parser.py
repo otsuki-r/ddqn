@@ -56,3 +56,9 @@ ddqn_parser.add_argument(
     type=str,
     default=None,
 )
+ddqn_parser.add_argument(
+    "--checkpoint-episodes",
+    help="Frequency with which to save checkpoints",  # type:ignore
+    type=int,
+    default=1000,
+)

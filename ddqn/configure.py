@@ -28,6 +28,7 @@ class TrainingConfig:
     outdir: pathlib.Path
     early_return_fn: EarlyStop = NullEarlyStop
     epsilon_exploration_steps: int = 0
+    checkpoint_episodes: int | None = 1000
 
 
 @dataclass
@@ -94,6 +95,12 @@ def process_cli_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
 
     if cli_args.tau < 0.0 or cli_args.tau > 1.0:
         raise ValueError("Update rate must lie in range [0, 1]")
+
+    if (
+        cli_args.checkpoint_episodes is not None
+        and cli_args.checkpoint_episodes <= 0
+    ):
+        raise ValueError("Checkpoint frequency must be positive")
 
     return cli_args
 

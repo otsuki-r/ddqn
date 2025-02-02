@@ -75,6 +75,7 @@ def build_training_config(
             min_mean=0.875,
         ),
         outdir=pathlib.Path(cli_args.outdir),
+        checkpoint_episodes=cli_args.checkpoint_episodes,
     )
 
 

@@ -41,16 +41,18 @@ class StepHandler:
     def __init__(
         self,
         *,
-        path: pathlib.Path,
+        outdir: pathlib.Path,
         ddqn: DoubleDQN,
         num_episodes: int,
         buffering_episodes: int = 100,
         watchers: list[Watcher] | None = None,
         early_return_fn: EarlyStop | None = None,
+        checkpoint_episodes: int | None = None,
     ) -> None:
-        self.path = path
+        self.outdir = outdir
         self.ddqn = ddqn
         self.buffering_episodes = buffering_episodes
+        self.checkpoint_episodes = checkpoint_episodes
 
         self.losses_buffer = []
         self.rewards_buffer = []
@@ -67,7 +69,7 @@ class StepHandler:
         }
         for fname in self.buffer_map.keys():
             # Trunacte files
-            (self.path / fname).open("w")
+            (self.outdir / fname).open("w")
 
         self.episode_watchers = [
             w for w in watchers or [] if w.watcher_type is WatcherType.EPISODES
@@ -185,39 +187,43 @@ class StepHandler:
         if step_summary.episode_number % self.buffering_episodes == 0:
             self.flush()
 
+        if step_summary.episode_number % self.checkpoint_episodes == 0:
+            outdir = self.outdir / f"checkpoint_{step_summary.episode_number}"
+            outdir.mkdir(parents=True, exist_ok=True)
+            self.ddqn.save(outdir)
         return
 
     def train_end(self) -> None:
         # Write out remaining values and plot
         self.flush()
-        self.plot()
-        self.ddqn.save(self.path)
+        self.plot(self.outdir)
+        self.ddqn.save(self.outdir)
 
     @classmethod
     def _format_tuple(cls, tup: tuple[int, int | float]) -> str:
         return str(tup).strip("()").replace(" ", "")
 
     def flush(self) -> None:
-        with (self.path / "losses.csv").open("a") as f:
+        with (self.outdir / "losses.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join([self._format_tuple(t) for t in self.losses_buffer])
             )
-        with (self.path / "rewards.csv").open("a") as f:
+        with (self.outdir / "rewards.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join(
                     [self._format_tuple(t) for t in self.rewards_buffer]
                 )
             )
-        with (self.path / "epsilons.csv").open("a") as f:
+        with (self.outdir / "epsilons.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join(
                     [self._format_tuple(t) for t in self.epsilons_buffer]
                 )
             )
-        with (self.path / "episode_durations.csv").open("a") as f:
+        with (self.outdir / "episode_durations.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join(
@@ -227,7 +233,7 @@ class StepHandler:
                     ]
                 )
             )
-        with (self.path / "episode_rewards.csv").open("a") as f:
+        with (self.outdir / "episode_rewards.csv").open("a") as f:
             f.write(
                 "\n"
                 + "\n".join(
@@ -241,13 +247,16 @@ class StepHandler:
         self.episode_durations_buffer = []
         self.episode_rewards_buffer = []
 
-    def plot(self) -> None:
-        plot_episode_durations(self.path / "episode_durations.csv")
-        plot_episode_rewards(self.path / "episode_rewards.csv")
-        plot_epsilons(self.path / "epsilons.csv")
-        plot_losses(self.path / "losses.csv")
+    def plot(self, outdir: pathlib.Path) -> None:
+        plot_episode_durations(outdir / "episode_durations.csv")
+        plot_episode_rewards(outdir / "episode_rewards.csv")
+        plot_epsilons(outdir / "epsilons.csv")
+        plot_losses(outdir / "losses.csv")
 
     def interrupt_handler(self, sig: int, frame) -> None:
         logger.warning("Interrupt called. Writing out...")
-        self.train_end()
+        outdir = self.outdir / "cancelled"
+        outdir.mkdir(parents=True, exist_ok=True)
+        self.ddqn.save(outdir)
+        self.flush()
         sys.exit(0)
