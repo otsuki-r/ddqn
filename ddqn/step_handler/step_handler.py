@@ -116,7 +116,7 @@ class StepHandler:
                     )
                 case WatcherTarget.REWARD:
                     w.append(
-                        step_summary.reward,
+                        step_summary.reward.item(),
                         counter=step_summary.global_step_number,
                     )
                 case WatcherTarget.EPSILON:
@@ -135,7 +135,7 @@ class StepHandler:
             "Episode: %s, duration: %s, reward: %s",
             step_summary.episode_number,
             step_summary.step_number,
-            step_summary.reward.item(),
+            step_summary.episode_reward,
         )
 
         self.pbar.update()
