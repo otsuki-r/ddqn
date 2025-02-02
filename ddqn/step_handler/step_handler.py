@@ -202,43 +202,11 @@ class StepHandler:
         return str(tup).strip("()").replace(" ", "")
 
     def flush(self) -> None:
-        with (self.outdir / "losses.csv").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join([self._format_tuple(t) for t in self.losses_buffer])
-            )
-        with (self.outdir / "rewards.csv").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join(
-                    [self._format_tuple(t) for t in self.rewards_buffer]
+        for fname, buffer in self.buffer_map.items():
+            with (self.outdir / fname).open("a") as f:
+                f.write(
+                    "\n" + "\n".join([self._format_tuple(t) for t in buffer])
                 )
-            )
-        with (self.outdir / "epsilons.csv").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join(
-                    [self._format_tuple(t) for t in self.epsilons_buffer]
-                )
-            )
-        with (self.outdir / "episode_durations.csv").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join(
-                    [
-                        self._format_tuple(t)
-                        for t in self.episode_durations_buffer
-                    ]
-                )
-            )
-        with (self.outdir / "episode_rewards.csv").open("a") as f:
-            f.write(
-                "\n"
-                + "\n".join(
-                    [self._format_tuple(t) for t in self.episode_rewards_buffer]
-                )
-            )
-
         self.losses_buffer = []
         self.rewards_buffer = []
         self.epsilons_buffer = []
