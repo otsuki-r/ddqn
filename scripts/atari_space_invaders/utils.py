@@ -8,7 +8,6 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from ddqn.action_selection.epsilon_greedy import make_epsilon_greedy
-from ddqn.adaptors import make_torch_from_int
 from ddqn.configure import (
     DEVICE,
     EnvConfig,
@@ -30,15 +29,12 @@ def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:
         "ALE/SpaceInvaders-v5",
         render_mode=get_render_mode(cli_args),
         obs_type="grayscale",
-        # render_mode="human",
     )
-    state_space_size = 716
     return EnvConfig(
         env=env,
         action_space_size=6,
         state_space_size=512,
         state_space_adaptor=pad_batch,
-        # state_space_adaptor=make_torch_from_int(state_space_size),
         state_space_dtype=torch.float32,
     )
 
