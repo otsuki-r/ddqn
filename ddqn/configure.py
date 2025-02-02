@@ -46,7 +46,34 @@ class EnvConfig:
     state_space_adaptor: Callable[[...], torch.Tensor] = torch_from_array
     state_space_dtype: torch.dtype = torch.float32
     action_space_dtype: torch.dtype = torch.int64
-    reward_dtype: torch.dtype = torch.float32
+    reward_space_dtype: torch.dtype = torch.float32
+
+    def make_adapted_reset(self) -> Callable[..., tuple[...]]:
+        def inner(*args, **kwargs) -> tuple[...]:
+            _state, v = self.env.reset(*args, **kwargs)
+            state = self.state_space_adaptor(
+                _state, dtype=self.state_space_dtype, device=DEVICE
+            )  # (state_space_size,)
+            return state, v
+
+        return inner
+
+    def make_adapted_step(self) -> Callable[..., tuple[...]]:
+        """Cast state and reward to torch tensors"""
+
+        def inner(*args, **kwargs) -> tuple[...]:
+            _next_state, _reward, v1, v2, v3 = self.env.step(*args, **kwargs)
+            next_state = self.state_space_adaptor(
+                _next_state, dtype=self.state_space_dtype, device=DEVICE
+            )  # (state_space_size,)
+
+            reward = torch.tensor(
+                [_reward], dtype=self.reward_space_dtype, device=DEVICE
+            )  # (1,)
+
+            return next_state, reward, v1, v2, v3
+
+        return inner
 
 
 def process_cli_args(parser: argparse.ArgumentParser) -> argparse.Namespace:

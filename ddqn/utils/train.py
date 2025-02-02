@@ -43,11 +43,18 @@ def train(
     outdir = training_config.outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
+    # Adapt envs to return torch tensors everywhere
+    env_reset = env_config.make_adapted_reset()
+    env_step = env_config.make_adapted_step()
+
+    # Alias for convenience
+    action_selection = training_config.action_selector_fn
+
     ddqn = ddqn.to(DEVICE)
 
+    # Configure what happens at end of steps/episodes/trainig
     step_handler = StepHandler(
         outdir=outdir,
-        ddqn=ddqn,
         num_episodes=training_config.num_episodes,
         buffering_episodes=10,
         watchers=watchers or [],
@@ -56,12 +63,7 @@ def train(
     )
     step_handler.register_handler(ddqn)
 
-    state: torch.Tensor
-    next_state: torch.Tensor | None
-    completed: bool
-    episode_duration: int | None
-    global_step_number = 0
-
+    # Configure ε compuption for use in ε-greedy action selection
     epsilon_schedule = ExponentialDecay(
         start=training_config.epsilon_start,
         end=training_config.epsilon_end,
@@ -69,49 +71,39 @@ def train(
         exploration_steps=training_config.epsilon_exploration_steps,
     )
 
+    state: torch.Tensor
+    next_state: torch.Tensor | None
+    completed: bool
+    episode_duration: int | None
+    global_step_number = 0
+
     logger.debug("Starting training...")
     start = time.time()
     for episode_number in range(1, training_config.num_episodes + 1):
         episode_reward: float = 0.0
 
-        _state, _ = env_config.env.reset()
-        state = env_config.state_space_adaptor(
-            _state,
-            dtype=env_config.state_space_dtype,
-            device=DEVICE,
-        )
+        state, _ = env_reset()
 
         for step_number in itertools.count(1):
             global_step_number += 1
+
+            # Step
             epsilon = epsilon_schedule(global_step_number)
+            action = action_selection(epsilon, state)
+            next_state, reward, termd, truncd, _ = env_step(action.item())
 
-            action = training_config.action_selector_fn(epsilon, state)
+            episode_reward += reward.item()  # type:ignore
 
-            _next_state, _reward, terminated, truncated, _ = (
-                env_config.env.step(action.item())
-            )
-            episode_reward += _reward  # type:ignore
-
-            reward = torch.tensor(
-                [_reward], dtype=env_config.reward_dtype, device=DEVICE
-            )
-
-            completed = terminated or truncated
-
+            completed = termd or truncd
             if completed:
                 next_state = None
                 episode_duration = step_number
                 this_episode_reward = episode_reward
             else:
-                next_state = env_config.state_space_adaptor(
-                    _next_state,
-                    dtype=env_config.state_space_dtype,
-                    device=DEVICE,
-                )
                 episode_duration = None
                 this_episode_reward = None
 
-            # Optimize the *policy network* by one step
+            # Optimize *policy network* by one step
             loss = _optimize_one_step(
                 ddqn,
                 replay_buffer=replay_buffer,
@@ -121,7 +113,7 @@ def train(
                 optimizer=training_config.optimiser,
             )
 
-            # Update the *target network* by one step
+            # Update *target network* by one step
             _update_one_step(ddqn, tau=training_config.tau)
 
             step_summary = StepSummary(
@@ -160,6 +152,7 @@ def train(
 
     logger.debug("Finished training")
     logger.debug(f"Time taken: {time.time() - start:.3f}s")
+
     return
 
 
