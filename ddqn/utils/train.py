@@ -43,6 +43,8 @@ def train(
     outdir = training_config.outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
+    ddqn = ddqn.to(DEVICE)
+
     step_handler = StepHandler(
         outdir=outdir,
         ddqn=ddqn,
@@ -52,8 +54,7 @@ def train(
         early_return_fn=training_config.early_return_fn,
         checkpoint_episodes=training_config.checkpoint_episodes,
     )
-
-    ddqn = ddqn.to(DEVICE)
+    step_handler.register_handler(ddqn)
 
     state: torch.Tensor
     next_state: torch.Tensor | None
@@ -140,7 +141,7 @@ def train(
             step_handler.step_end(step_summary, replay_buffer)
 
             if completed:
-                step_handler.episode_end(step_summary)
+                step_handler.episode_end(step_summary, ddqn)
                 break
 
             else:
@@ -155,7 +156,7 @@ def train(
             logger.info("Early return condition met.")
             break
 
-    step_handler.train_end()
+    step_handler.train_end(ddqn)
 
     logger.debug("Finished training")
     logger.debug(f"Time taken: {time.time() - start:.3f}s")

@@ -1,8 +1,10 @@
 import dataclasses
+import functools
 import logging
 import pathlib
 import signal
 import sys
+from types import FrameType
 
 import enlighten  # type: ignore
 import torch
@@ -42,7 +44,6 @@ class StepHandler:
         self,
         *,
         outdir: pathlib.Path,
-        ddqn: DoubleDQN,
         num_episodes: int,
         buffering_episodes: int = 100,
         watchers: list[Watcher] | None = None,
@@ -50,7 +51,6 @@ class StepHandler:
         checkpoint_episodes: int | None = None,
     ) -> None:
         self.outdir = outdir
-        self.ddqn = ddqn
         self.buffering_episodes = buffering_episodes
         self.checkpoint_episodes = checkpoint_episodes
 
@@ -87,8 +87,6 @@ class StepHandler:
             unit="episodes",
             color="green",
         )
-
-        signal.signal(signal.SIGINT, self.interrupt_handler)
 
     def step_end(
         self, step_summary: StepSummary, replay_buffer: ReplayBuffer
@@ -143,7 +141,7 @@ class StepHandler:
                         w.target,
                     )
 
-    def episode_end(self, step_summary: StepSummary) -> None:
+    def episode_end(self, step_summary: StepSummary, ddqn: DoubleDQN) -> None:
         logger.debug(
             "Episode: %s, duration: %s, reward: %s",
             step_summary.episode_number,
@@ -190,14 +188,14 @@ class StepHandler:
         if step_summary.episode_number % self.checkpoint_episodes == 0:
             outdir = self.outdir / f"checkpoint_{step_summary.episode_number}"
             outdir.mkdir(parents=True, exist_ok=True)
-            self.ddqn.save(outdir)
+            ddqn.save(outdir)
         return
 
-    def train_end(self) -> None:
+    def train_end(self, ddqn: DoubleDQN) -> None:
         # Write out remaining values and plot
         self.flush()
         self.plot(self.outdir)
-        self.ddqn.save(self.outdir)
+        ddqn.save(self.outdir)
 
     @classmethod
     def _format_tuple(cls, tup: tuple[int, int | float]) -> str:
@@ -253,10 +251,16 @@ class StepHandler:
         plot_epsilons(outdir / "epsilons.csv")
         plot_losses(outdir / "losses.csv")
 
-    def interrupt_handler(self, sig: int, frame) -> None:
+    def register_handler(self, ddqn: DoubleDQN) -> None:
+        interrupt_handler = functools.partial(self.interrupt_handler, ddqn=ddqn)
+        signal.signal(signal.SIGINT, interrupt_handler)
+
+    def interrupt_handler(
+        self, sig: int, frame: FrameType, ddqn: DoubleDQN
+    ) -> None:
         logger.warning("Interrupt called. Writing out...")
         outdir = self.outdir / "cancelled"
         outdir.mkdir(parents=True, exist_ok=True)
-        self.ddqn.save(outdir)
+        ddqn.save(outdir)
         self.flush()
         sys.exit(0)
