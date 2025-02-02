@@ -2,6 +2,7 @@ import math
 import random
 from typing import Protocol
 
+import numpy as np
 import torch
 import torch.nn as nn
 from gymnasium import Env
@@ -29,6 +30,12 @@ ddqn_parser.add_argument(
     type=float,
     default=1e-4,
 )
+ddqn_parser.add_argument(
+    "--epsilon-exploration-steps",
+    help="Number of pure exploration steps",
+    type=int,
+    default=0,
+)
 
 
 class EpsilonSchedule(Protocol):
@@ -46,7 +53,7 @@ class ExponentialDecay:
         self.epsilon_start = start
         self.epsilon_end = end
         self.epsilon_decay = decay
-        self.epsilon_delta = self.start - self.end
+        self.epsilon_delta = self.epsilon_start - self.epsilon_end
         self.exploration_steps = exploration_steps
 
     def __call__(self, global_step_number: int) -> float:
@@ -68,9 +75,9 @@ class ExponentialDecay:
         * $\espilon_{\text{decay}}$ is the decay rate of $\epsilon$
         """
 
-        return torch.heaviside(
-            self.exploration_steps - global_step_number
-        ) + torch.heaviside(global_step_number - self.exploration_steps) * (
+        return np.heaviside(
+            self.exploration_steps - global_step_number, 0.5
+        ) + np.heaviside(global_step_number - self.exploration_steps, 0.5) * (
             self.epsilon_end
             + self.epsilon_delta
             * math.exp(-global_step_number * self.epsilon_decay)

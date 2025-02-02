@@ -50,6 +50,7 @@ def build_training_config(
         epsilon_start=cli_args.epsilon_start,
         epsilon_end=cli_args.epsilon_end,
         epsilon_decay=cli_args.epsilon_decay,
+        epsilon_exploration_steps=cli_args.epsilon_exploration_steps,
         num_episodes=cli_args.num_episodes,
         batch_size=cli_args.batch_size,
         gamma=cli_args.gamma,

@@ -18,7 +18,6 @@ class TrainingConfig:
     epsilon_start: float
     epsilon_end: float
     epsilon_decay: float
-    epsilon_exploration_steps: int = 0
     num_episodes: int
     batch_size: int
     gamma: float
@@ -28,6 +27,7 @@ class TrainingConfig:
     loss_fn: torch.nn.modules.loss._Loss
     outdir: pathlib.Path
     early_return_fn: EarlyStop = NullEarlyStop
+    epsilon_exploration_steps: int = 0
 
 
 @dataclass
