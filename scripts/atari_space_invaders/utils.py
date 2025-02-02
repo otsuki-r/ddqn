@@ -22,7 +22,6 @@ from ddqn.ddqn import DoubleDQN
 
 
 def pad_batch(x: torch.tensor, **kwargs) -> torch.Tensor:
-    # Env outputs (H, W, C). Pad to (N, H, W, C) Add in N=1 to be compatible with batch learning
     return torch.tensor(x, dtype=kwargs["dtype"], device=kwargs["device"])
 
 
@@ -30,6 +29,7 @@ def build_env_config(cli_args: argparse.Namespace) -> EnvConfig:
     env = gym.make(
         "ALE/SpaceInvaders-v5",
         render_mode=get_render_mode(cli_args),
+        obs_type="grayscale",
         # render_mode="human",
     )
     state_space_size = 716
