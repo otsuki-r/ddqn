@@ -21,7 +21,7 @@ from utils import (
     custom_eval,
 )
 
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOG_LEVEL, stream=sys.stdout)
 logging.getLogger("ddqn").setLevel(logging.DEBUG)
 
@@ -49,15 +49,15 @@ if __name__ == "__main__":
             freq=100,
         ),
         MovingAverageWatcher(
-            capacity=1_000,
+            capacity=100,
             target=WatcherTarget.REWARD,
-            watcher_type=WatcherType.EPISODES,
+            watcher_type=WatcherType.GLOBAL_STEP,
             freq=50,
         ),
         MovingAverageWatcher(
-            capacity=10_000,
+            capacity=1_000,
             target=WatcherTarget.REWARD,
-            watcher_type=WatcherType.EPISODES,
+            watcher_type=WatcherType.GLOBAL_STEP,
             freq=50,
         ),
     ]
