@@ -53,6 +53,7 @@ class StepHandler:
         self.outdir = outdir
         self.buffering_episodes = buffering_episodes
         self.checkpoint_episodes = checkpoint_episodes
+        self.early_return_fn = early_return_fn
 
         self.losses_buffer = []
         self.rewards_buffer = []
@@ -141,7 +142,7 @@ class StepHandler:
                         w.target,
                     )
 
-    def episode_end(self, step_summary: StepSummary, ddqn: DoubleDQN) -> None:
+    def episode_end(self, step_summary: StepSummary, ddqn: DoubleDQN) -> bool:
         logger.debug(
             "Episode: %s, duration: %s, reward: %s",
             step_summary.episode_number,
@@ -189,7 +190,9 @@ class StepHandler:
             outdir = self.outdir / f"checkpoint_{step_summary.episode_number}"
             outdir.mkdir(parents=True, exist_ok=True)
             ddqn.save(outdir)
-        return
+
+        self.early_return_fn.update(step_summary.episode_reward)
+        return self.early_return_fn.evaluate(step_summary.episode_number)
 
     def train_end(self, ddqn: DoubleDQN) -> None:
         # Write out remaining values and plot

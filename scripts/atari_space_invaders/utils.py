@@ -15,7 +15,8 @@ from ddqn.configure import (
     TrainingConfig,
     get_render_mode,
 )
-from ddqn.early_stop import RunningReward
+
+from ddqn.early_stop.early_stop import RunningReward
 from ddqn.utils import run
 from ddqn.ddqn import DoubleDQN
 
@@ -61,10 +62,9 @@ def build_training_config(
             dtype=env_config.action_space_dtype,
             device=DEVICE,
         ),
-        # loss_fn=nn.MSELoss(),
         loss_fn=nn.SmoothL1Loss(),
         early_return_fn=RunningReward(
-            eval_frequency=50,
+            eval_frequency=cli_args.early_stop_frequency,
             short_sample=1_000,
             long_sample=10_000,
             tolerance=0.001,

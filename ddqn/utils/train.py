@@ -73,13 +73,18 @@ def train(
 
     state: torch.Tensor
     next_state: torch.Tensor | None
-    completed: bool
     episode_duration: int | None
     global_step_number = 0
+    episode_completed: bool
+    training_completed: bool = False
 
     logger.debug("Starting training...")
     start = time.time()
     for episode_number in range(1, training_config.num_episodes + 1):
+        if training_completed:
+            logger.info("Early return condition met.")
+            break
+
         episode_reward: float = 0.0
 
         state, _ = env_reset()
@@ -94,8 +99,8 @@ def train(
 
             episode_reward += reward.item()  # type:ignore
 
-            completed = termd or truncd
-            if completed:
+            episode_completed = termd or truncd
+            if episode_completed:
                 next_state = None
                 episode_duration = step_number
                 this_episode_reward = episode_reward
@@ -132,21 +137,14 @@ def train(
 
             step_handler.step_end(step_summary, replay_buffer)
 
-            if completed:
-                step_handler.episode_end(step_summary, ddqn)
+            if episode_completed:
+                training_completed = step_handler.episode_end(
+                    step_summary, ddqn
+                )
                 break
 
             else:
                 state = next_state
-
-        # Check if early return has been satisfied
-        training_config.early_return_fn.update(episode_reward)
-        if (
-            episode_number % 50 == 0
-            and training_config.early_return_fn.evaluate(episode_number)
-        ):
-            logger.info("Early return condition met.")
-            break
 
     step_handler.train_end(ddqn)
 
