@@ -26,23 +26,29 @@ class DQN(nn.Module):
 class ConvolutionDQN(nn.Module):
     def __init__(self, **kwargs: Unpack[DQNParams]) -> None:
         super().__init__()
-        self.l1 = nn.Conv2d(3, 1, (21, 16))
-        self.l2 = nn.Linear(27550, 166)
-        self.l3 = nn.Linear(166, kwargs["n_actions"])
+        # (210, 160)
+        self.l1 = nn.Conv2d(1, 1, 8, stride=4)
+        # (51, 39)
+        self.l2 = nn.Conv2d(1, 1, 16, stride=2)
+        # (18, 12)
+        self.l3 = nn.Linear(18 * 12, kwargs["n_actions"])
 
     def forward(self, x: torch.Tensor) -> None:
-        single = len(x.shape) == 3
+        single = len(x.shape) == 2
         if single:
-            # Add in batch_size
-            x = x.unsqueeze(0)
-
-        # input is (N, H, W, C), but torch expects (N, C, H, W)
-        x = fn.relu(self.l1(x.permute(0, 3, 1, 2)).flatten(1))
-        x = fn.relu(self.l2(x))
-        if single:
-            return self.l3(x).squeeze(0)
+            # Add in batch_size and num_channels
+            x = x.unsqueeze(0).unsqueeze(0)
         else:
-            return self.l3(x)
+            # Add in num_channels
+            x = x.unsqueeze(1)
+
+        x = fn.relu(self.l1(x))
+        x = fn.relu(self.l2(x))
+        # Squeeze out num_channels and flatten H * W
+        if single:
+            return self.l3(x.squeeze(1).flatten(1)).squeeze(0)
+        else:
+            return self.l3(x.squeeze(1).flatten(1))
 
 
 class DoubleDQN:
