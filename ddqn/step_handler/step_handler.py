@@ -187,9 +187,13 @@ class StepHandler:
             self.flush()
 
         if step_summary.episode_number % self.checkpoint_episodes == 0:
-            outdir = self.outdir / f"checkpoint_{step_summary.episode_number}"
-            outdir.mkdir(parents=True, exist_ok=True)
-            ddqn.save(outdir)
+            checkpoint_outdir = (
+                self.outdir / f"checkpoint_{step_summary.episode_number}"
+            )
+            checkpoint_outdir.mkdir(parents=True, exist_ok=True)
+            ddqn.save(checkpoint_outdir)
+            self.flush()
+            self.plot(self.outdir, checkpoint_outdir)
 
         self.early_return_fn.update(step_summary.episode_reward)
         return self.early_return_fn.evaluate(step_summary.episode_number)
@@ -248,11 +252,17 @@ class StepHandler:
         self.episode_durations_buffer = []
         self.episode_rewards_buffer = []
 
-    def plot(self, outdir: pathlib.Path) -> None:
-        plot_episode_durations(outdir / "episode_durations.csv")
-        plot_episode_rewards(outdir / "episode_rewards.csv")
-        plot_epsilons(outdir / "epsilons.csv")
-        plot_losses(outdir / "losses.csv")
+    def plot(
+        self, indir: pathlib.Path, outdir: pathlib.Path | None = None
+    ) -> None:
+        plot_episode_durations(
+            indir / "episode_durations.csv", outdir / "episodes_durations.csv"
+        )
+        plot_episode_rewards(
+            indir / "episode_rewards.csv", outdir / "episodes_rewards.csv"
+        )
+        plot_epsilons(indir / "epsilons.csv", outdir / "epsilons.csv")
+        plot_losses(indir / "losses.csv", outdir / "losses.csv")
 
     def register_handler(self, ddqn: DoubleDQN) -> None:
         interrupt_handler = functools.partial(self.interrupt_handler, ddqn=ddqn)
@@ -262,8 +272,9 @@ class StepHandler:
         self, sig: int, frame: FrameType, ddqn: DoubleDQN
     ) -> None:
         logger.warning("Interrupt called. Writing out...")
-        outdir = self.outdir / "cancelled"
-        outdir.mkdir(parents=True, exist_ok=True)
-        ddqn.save(outdir)
+        cancelled_outdir = self.outdir / "cancelled"
+        cancelled_outdir.mkdir(parents=True, exist_ok=True)
+        ddqn.save(cancelled_outdir)
         self.flush()
+        self.plot(self.outdir, cancelled_outdir)
         sys.exit(0)
