@@ -3,6 +3,7 @@ import logging
 import time
 from collections.abc import Collection
 
+import numpy as np
 import torch
 import torch.optim as optim
 
@@ -231,11 +232,16 @@ def _optimize_one_step(
 
     this_batch = StateChanges(sample_state_changes)
 
-    state_batch = torch.stack(
-        this_batch.states
-    )  # (batch_size, dim(state_space))
-    action_batch = torch.stack(this_batch.actions)  # (batch_size, 1)
-    reward_batch = torch.stack(this_batch.rewards)  # (batch_size, 1)
+    with torch.no_grad():
+        state_batch = torch.from_numpy(
+            np.array([t.numpy() for t in this_batch.states], dtype=np.float32)
+        )  # (batch_size, dim(state_space))
+        action_batch = torch.from_numpy(
+            np.array([t.numpy() for t in this_batch.actions], dtype=np.int64)
+        )  # (batch_size, 1)
+        reward_batch = torch.from_numpy(
+            np.array([t.numpy() for t in this_batch.rewards], dtype=np.float32)
+        )  # (batch_size, 1)
 
     # Compute predictions $Q^{\text{policy}}(s_t, a_t)$.
     predicted_state_action_values = ddqn.pnet(state_batch).gather(
@@ -246,32 +252,30 @@ def _optimize_one_step(
     # $Q^{\text{target}}(s_t, a_t) = r_t + \gamma V^{\text{target}}(s_{t+1})$.
     # Any experiences with `next_state = None` were terminated and so
     # automatically have a value of zero.
-    target_next_state_values = torch.zeros(
-        (batch_size, 1), dtype=torch.float32, device=DEVICE
-    )  # (batch_size, 1)
-    non_final_mask = torch.tensor(
-        list(map(lambda s: s is not None, this_batch.next_states)),
-        dtype=torch.bool,
-        device=DEVICE,
-    )  # (batch_size,)
-    _non_final_next_states = [
-        s for s in this_batch.next_states if s is not None
-    ]
-    if _non_final_next_states:
-        with torch.no_grad():
-            non_final_next_states = torch.stack(
-                _non_final_next_states
-            )  # (VAR, dim(state_space))
-            argmax_actions = (
-                ddqn.pnet(non_final_next_states).argmax(1)  # (VAR,)
+    with torch.no_grad():
+        target_state_action_values = reward_batch  # (batch_size, 1)
+        non_final_mask = torch.tensor(
+            [ns is not None for ns in this_batch.next_states],
+            dtype=torch.bool,
+            device=DEVICE,
+        )  # (batch_size,)
+        non_final_next_states = torch.from_numpy(
+            np.array(
+                [
+                    t.numpy()
+                    for t, mask in zip(this_batch.next_states, non_final_mask)
+                    if mask
+                ],
+                dtype=np.float32,
             )
-            target_next_state_values[non_final_mask] = ddqn.tnet(
+        )  # (VAR, dim(state_space))
+        if non_final_next_states.nelement() != 0:
+            argmax_actions = (
+                ddqn.pnet(non_final_next_states).argmax(1)  # (VAR, 1)
+            ).unsqueeze(1)
+            target_state_action_values[non_final_mask] += gamma * ddqn.tnet(
                 non_final_next_states
-            ).gather(1, argmax_actions.unsqueeze(1))  # (batch_size,)
-
-    target_state_action_values = (
-        reward_batch + gamma * target_next_state_values
-    )  # (batch_size, 1)
+            ).gather(1, argmax_actions)  # (VAR, 1)
 
     this_loss = loss_fn(
         predicted_state_action_values, target_state_action_values

@@ -26,12 +26,19 @@ class DQN(nn.Module):
 class ConvolutionDQN(nn.Module):
     def __init__(self, **kwargs: Unpack[DQNParams]) -> None:
         super().__init__()
+        # # (210, 160)
+        # self.l1 = nn.Conv2d(1, 1, 8, stride=4)
+        # # (51, 39)
+        # self.l2 = nn.Conv2d(1, 1, 16, stride=2)
+        # # (18, 12)
+        # self.l3 = nn.Linear(18 * 12, kwargs["n_actions"])
+
         # (210, 160)
-        self.l1 = nn.Conv2d(1, 1, 8, stride=4)
-        # (51, 39)
-        self.l2 = nn.Conv2d(1, 1, 16, stride=2)
-        # (18, 12)
-        self.l3 = nn.Linear(18 * 12, kwargs["n_actions"])
+        self.l1 = nn.Conv2d(1, 1, (8, 64), stride=4)
+        # (51, 25)
+        self.l2 = nn.Conv2d(1, 1, (8, 16), stride=1)
+        # (44, 10)
+        self.l3 = nn.Linear(44 * 10, kwargs["n_actions"])
 
     def forward(self, x: torch.Tensor) -> None:
         single = len(x.shape) == 2

@@ -24,19 +24,19 @@ ddqn_parser.add_argument(
     "--gamma",
     help="Discounting power γ of past actions in computing reward",
     type=float,
-    default=0.95,
+    default=0.995,
 )
 ddqn_parser.add_argument(
     "--alpha",
     help="Learing rate α of the optimiser to be used in training.",
     type=float,
-    default=1e-3,
+    default=1e-5,
 )
 ddqn_parser.add_argument(
     "--tau",
     help="Update rate τ of target network (soft update).",
     type=float,
-    default=1e-2,
+    default=1e-3,
 )
 ddqn_parser.add_argument(
     "--outdir",

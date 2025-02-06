@@ -16,13 +16,13 @@ ddqn_parser.add_argument(
     "--epsilon-start",
     help="Start value for ε used in epsilon-greedy action selection.",
     type=float,
-    default=0.90,
+    default=1.0,
 )
 ddqn_parser.add_argument(
     "--epsilon-end",
     help="End value for ε used in epsilon-greedy action selection.",
     type=float,
-    default=0.05,
+    default=0.01,
 )
 ddqn_parser.add_argument(
     "--epsilon-decay",
